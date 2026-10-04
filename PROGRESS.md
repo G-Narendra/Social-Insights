@@ -1,7 +1,7 @@
 # PROGRESS
 
 ## Current status
-Phase: 0  |  Role: Project Lead / Orchestrator  |  Last update: 2026-10-05T01:30+05:30
+Phase: 2  |  Role: Data Ingestion Engineer  |  Last update: 2026-10-05T01:45+05:30
 
 ## Environment
 - Python: 3.12.8   venv: .venv (confirmed sys.prefix: C:\Users\naren\Downloads\Social-Insights\.venv)
@@ -35,11 +35,14 @@ Phase: 0  |  Role: Project Lead / Orchestrator  |  Last update: 2026-10-05T01:30
       Evidence: Created with validation, computed properties for feature flags
 - [x] T1.2 SQLAlchemy models
       Evidence: All 5 tables created with constraints and indexes
-- [ ] T1.3 Alembic migration for initial schema
+- [x] T1.3 Alembic migration for initial schema
+      Evidence: Created alembic.ini, env.py, and 001_initial_schema.py. Ran `alembic upgrade head` successfully creating all 5 tables and indexes.
 - [x] T1.4 Session management supporting SQLite and Postgres
       Evidence: async session with dialect detection from DATABASE_URL
-- [ ] T1.5 Repository/service functions
-- [ ] T1.6 Tests for constraints and aggregates
+- [x] T1.5 Repository/service functions
+      Evidence: Created keyword_service, mention_service, run_service, stats_service with single-roundtrip aggregations and idempotent upsert.
+- [x] T1.6 Tests for constraints and aggregates
+      Evidence: 17/17 tests passing in `backend/tests/unit/test_services.py` verifying idempotency (duplicate source/source_id leaves 1 row) and hand-computed aggregations. GATE 1 PASSED.
 
 ### Phase 2: Ingestion layer
 - [ ] T2.1 SourceConnector abstract base
