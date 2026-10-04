@@ -1,8 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "social-insights"
 version = "1.0.0"
 description = "Open-source social listening platform with tiered AI intelligence"
 requires-python = ">=3.11"
+
+[tool.setuptools.package-dir]
+"" = "backend"
+
+[tool.setuptools.packages.find]
+where = ["backend"]
 
 [tool.ruff]
 target-version = "py312"
