@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Google News - Toyota</title>
+    <link>https://news.google.com</link>
+    <description>Google News search feed</description>
+    <item>
+      <title>Toyota Reports Record Global Sales for Fiscal Year - Reuters</title>
+      <link>https://news.google.com/articles/CBMiRGh0dHBzOi8vd3d3LnJldXRlcnMuY29tL2J1c2luZXNzL2F1dG9zLXRveW90YS1yZWNvcmQtc2FsZXMtMjAyNC0wMS0zMC_SAQA</link>
+      <guid isPermaLink="false">tag:google.com,2026:news/123456</guid>
+      <pubDate>Thu, 15 Jan 2026 08:30:00 GMT</pubDate>
+      <description>&lt;a href="https://news.google.com"&gt;Toyota Motor Corp&lt;/a&gt; posted record vehicle deliveries driven by robust hybrid demand in North America and Europe.</description>
+    </item>
+    <item>
+      <title>New 2026 Toyota Tacoma Hybrid Review and Pricing - MotorTrend</title>
+      <link>https://news.google.com/articles/CBMiS2h0dHBzOi8vd3d3Lm1vdG9ydHJlbmQuY29tL3Jldmlld3MvMjAyNi10b3lvdGEtdGFjb21hLWh5YnJpZC1maXJzdC1kcml2ZS_SAQA</link>
+      <guid isPermaLink="false">tag:google.com,2026:news/789012</guid>
+      <pubDate>Fri, 16 Jan 2026 14:00:00 GMT</pubDate>
+      <description>The redesigned midsize pickup pairs legendary off-road hardware with a potent i-Force Max powertrain.</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "tags": ["python", "api", "integration"],
+      "owner": {
+        "reputation": 4500,
+        "user_id": 98765,
+        "display_name": "developer_dan"
+      },
+      "is_answered": true,
+      "view_count": 1280,
+      "answer_count": 3,
+      "score": 15,
+      "last_activity_date": 1705330000,
+      "creation_date": 1705310000,
+      "question_id": 7891011,
+      "link": "https://stackoverflow.com/questions/7891011/how-to-consume-toyota-developer-connected-car-api",
+      "title": "How to consume Toyota Connected Car REST API with OAuth2 in Python?"
+    }
+  ],
+  "has_more": false,
+  "quota_max": 10000,
+  "quota_remaining": 9950
+}

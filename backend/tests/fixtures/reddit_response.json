@@ -1,0 +1,42 @@
+{
+  "kind": "Listing",
+  "data": {
+    "after": "t3_123456",
+    "children": [
+      {
+        "kind": "t3",
+        "data": {
+          "id": "abc1234",
+          "title": "My 2024 Toyota RAV4 Hybrid passed 50k miles without a single issue",
+          "selftext": "Regular oil changes and tire rotations. Getting 42 MPG combined. Extremely satisfied with build quality and reliability.",
+          "author": "hybrid_driver",
+          "subreddit": "rav4club",
+          "score": 412,
+          "num_comments": 89,
+          "upvote_ratio": 0.96,
+          "permalink": "/r/rav4club/comments/abc1234/my_2024_toyota_rav4_hybrid_passed_50k_miles/",
+          "created_utc": 1705320000.0,
+          "domain": "self.rav4club",
+          "is_video": false
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "id": "def5678",
+          "title": "Dealership markup on the new Land Cruiser is absurd",
+          "selftext": "Visited three dealers today, all asking $15,000 above MSRP for the first edition. Customer service was dismissive.",
+          "author": "offroad_fan",
+          "subreddit": "cars",
+          "score": 850,
+          "num_comments": 340,
+          "upvote_ratio": 0.94,
+          "permalink": "/r/cars/comments/def5678/dealership_markup_on_the_new_land_cruiser_is/",
+          "created_utc": 1705323600.0,
+          "domain": "self.cars",
+          "is_video": false
+        }
+      }
+    ]
+  }
+}

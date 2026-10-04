@@ -1,0 +1,24 @@
+{
+  "kind": "youtube#searchListResponse",
+  "etag": "etag_12345",
+  "pageInfo": {
+    "totalResults": 2,
+    "resultsPerPage": 2
+  },
+  "items": [
+    {
+      "kind": "youtube#searchResult",
+      "id": {
+        "kind": "youtube#video",
+        "videoId": "dQw4w9WgXcQ"
+      },
+      "snippet": {
+        "publishedAt": "2026-01-14T18:00:00Z",
+        "channelId": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+        "title": "2026 Toyota GR Corolla Track Test & Long Term Verdict",
+        "description": "We spent 6 months driving the Toyota GR Corolla across canyons and race tracks to see if it holds up to enthusiast expectations.",
+        "channelTitle": "Throttle House Reviews"
+      }
+    }
+  ]
+}

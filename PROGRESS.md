@@ -1,7 +1,7 @@
 # PROGRESS
 
 ## Current status
-Phase: 2  |  Role: Data Ingestion Engineer  |  Last update: 2026-10-05T01:45+05:30
+Phase: 3  |  Role: Data Processing Engineer  |  Last update: 2026-10-05T01:50+05:30
 
 ## Environment
 - Python: 3.12.8   venv: .venv (confirmed sys.prefix: C:\Users\naren\Downloads\Social-Insights\.venv)
@@ -45,16 +45,26 @@ Phase: 2  |  Role: Data Ingestion Engineer  |  Last update: 2026-10-05T01:45+05:
       Evidence: 17/17 tests passing in `backend/tests/unit/test_services.py` verifying idempotency (duplicate source/source_id leaves 1 row) and hand-computed aggregations. GATE 1 PASSED.
 
 ### Phase 2: Ingestion layer
-- [ ] T2.1 SourceConnector abstract base
-- [ ] T2.2 Shared HTTP client
-- [ ] T2.3 Registry
-- [ ] T2.4 Hacker News connector
-- [ ] T2.5 Google News RSS connector
-- [ ] T2.6 Reddit connector
-- [ ] T2.7 YouTube connector
-- [ ] T2.8 Stack Exchange connector (optional)
-- [ ] T2.9 Orchestrator
-- [ ] T2.10 Fixture tests
+- [x] T2.1 SourceConnector abstract base
+      Evidence: `app/ingestion/base.py` created with SourceConnector ABC, typed ConnectorError hierarchy.
+- [x] T2.2 Shared HTTP client
+      Evidence: `app/ingestion/http_client.py` created with exponential backoff, jitter, Retry-After header parsing, and custom User-Agent.
+- [x] T2.3 Registry
+      Evidence: `app/ingestion/registry.py` created with dynamic connector instantiation and configuration-based enabling.
+- [x] T2.4 Hacker News connector
+      Evidence: `app/ingestion/hackernews.py` queries Algolia API for stories and comments, parses engagement metrics.
+- [x] T2.5 Google News RSS connector
+      Evidence: `app/ingestion/google_news_rss.py` parses RSS feed via feedparser and extracts publisher metadata.
+- [x] T2.6 Reddit connector
+      Evidence: `app/ingestion/reddit.py` implements official OAuth client_credentials flow, graceful degradation when unconfigured.
+- [x] T2.7 YouTube connector
+      Evidence: `app/ingestion/youtube.py` implements YouTube Data API v3 search with quota awareness.
+- [x] T2.8 Stack Exchange connector (optional)
+      Evidence: `app/ingestion/stackexchange.py` queries public Stack Overflow API with throttle backoff detection.
+- [x] T2.9 Orchestrator
+      Evidence: `app/ingestion/orchestrator.py` runs connectors concurrently via asyncio.gather with fault isolation and telemetry.
+- [x] T2.10 Fixture tests
+      Evidence: 9/9 connector unit tests pass in `backend/tests/unit/test_connectors.py` (total 26/26 test suite). Live network collection of "Toyota" yielded 50 mentions (25 HN, 25 Google News). GATE 2 PASSED.
 
 ### Phase 3: Processing pipeline
 - [ ] T3.1-T3.9 (not started)
