@@ -172,7 +172,54 @@ Phase: 5  |  Role: Backend / API Engineer  |  Last update: 2026-10-05T02:02+05:3
       ```
 
 ### Phase 6: Frontend
-- [ ] T6.1-T6.12 (not started)
+- [x] T6.1 Next.js 14 App Router project scaffolding with TypeScript, Tailwind CSS, and local node_modules.
+      Evidence: `frontend/package.json`, `tsconfig.json`, `tailwind.config.ts`, `postcss.config.js`.
+- [x] T6.2 Modern design system with dark mode slate/indigo/violet palette, custom glassmorphism primitives, and Inter typography.
+      Evidence: `frontend/src/app/globals.css`, `frontend/src/app/layout.tsx`.
+- [x] T6.3 Typed API client with error mapping and automatic query serialization.
+      Evidence: `frontend/src/lib/api.ts` and `frontend/src/lib/types.ts`.
+- [x] T6.4 Sticky Navbar with brand selector dropdown, live backend health probe, and collection trigger modal.
+      Evidence: `frontend/src/components/Navbar.tsx`.
+- [x] T6.5 Overview Tab: 4 KPI cards (total, positive%, neutral%, negative%), sentiment distribution, top topics bar chart, timeline visualization, and data quality/drop audit card.
+      Evidence: `frontend/src/components/OverviewTab.tsx`.
+- [x] T6.6 Mentions Feed Tab: instant search, multi-faceted filtering (sentiment, topic, source), sorting, pagination, confidence badges, expandable text, and original external links.
+      Evidence: `frontend/src/components/MentionsTab.tsx`.
+- [x] T6.7 AI Insights & Executive Synthesis Tab: model badging (`AI: NVIDIA NIM` or `Template Fallback`), refresh button with spinner, and 5 structured intelligence cards (complaints, features, pain points, praises, opportunities) with cited mention IDs.
+      Evidence: `frontend/src/components/InsightsTab.tsx`.
+- [x] T6.8 Competitor Comparison Tab (BON-02): multi-brand volume, sentiment distribution, and top complaints.
+      Evidence: `frontend/src/components/CompareTab.tsx`.
+- [x] T6.9 Trends & Anomaly Alerts Banner (BON-01, BON-04): topic acceleration pill tags and negative sentiment spike anomaly warning cards.
+      Evidence: `frontend/src/components/TrendsAlertsBanner.tsx`.
+- [x] T6.10 Interactive Collection Ingestion Modal with live polling progress bar (`queued` -> `running` -> `succeeded`).
+      Evidence: `frontend/src/components/CollectionModal.tsx`.
+- [x] T6.11 Unified master dashboard orchestrating active tab states, global brand switcher, and data refresh cycles.
+      Evidence: `frontend/src/app/page.tsx`.
+- [x] T6.12 GATE 6 Verification: Production build succeeded with zero errors (`npm run build`).
+      Evidence terminal output:
+      ```
+      > social-insights-frontend@1.0.0 build
+      > next build
+
+        ▲ Next.js 14.2.23
+         Creating an optimized production build ...
+       ✓ Compiled successfully
+         Linting and checking validity of types ...
+         Collecting page data ...
+         Generating static pages (4/4) ...
+       ✓ Generating static pages (4/4)
+         Finalizing page optimization ...
+         Collecting build traces ...
+
+      Route (app)                              Size     First Load JS
+      ┌ ○ /                                    15.3 kB         103 kB
+      └ ○ /_not-found                          873 B          88.2 kB
+      + First Load JS shared by all            87.3 kB
+        ├ chunks/117-78d466e9c4558ff6.js       31.7 kB
+        ├ chunks/fd9d1056-cce117dc4e21e608.js  53.6 kB
+        └ other shared chunks (total)          1.92 kB
+
+      ○  (Static)  prerendered as static content
+      ```
 
 ### Phase 7: Bonus features
 - [ ] T7.1-T7.6 (not started)
