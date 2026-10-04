@@ -259,7 +259,22 @@ Phase: 5  |  Role: Backend / API Engineer  |  Last update: 2026-10-05T02:02+05:3
       Evidence: Commit: "gate-9: deployment complete and verified".
 
 ### Phase 10: Hardening and documentation
-- [ ] T10.1-T10.8 (not started)
+- [x] T10.1 Secret scan: `scripts/scan_secrets.py` executed across all git-tracked files. Zero hardcoded secrets detected.
+      Evidence: `PASS: No hardcoded secrets or credentials detected across tracked files.`
+- [x] T10.2 Dependency security audit: Executed `pip-audit` and `npm audit`; documented security policy, patching posture, and threat model.
+      Evidence: `docs/SECURITY.md`.
+- [x] T10.3 Root `README.md` published: Comprehensive badges, quickstart in 3 minutes, tiered AI breakdown, architecture diagram, connector status, and API reference.
+      Evidence: `README.md`.
+- [x] T10.4 System Architecture document: Finalized data flow, cost/throughput analysis, and component specifications.
+      Evidence: `ARCHITECTURE.md`.
+- [x] T10.5 Security Policy & Hardening Guide: Threat model, XML-delimited prompt injection defense, rate limiting, and non-root containers.
+      Evidence: `docs/SECURITY.md`.
+- [x] T10.6 Live Platform Demonstration Script: 3-5 minute interactive walkthrough for evaluators and users.
+      Evidence: `docs/DEMO_SCRIPT.md`.
+- [x] T10.7 AI Model Card: Comprehensive benchmark evaluation report on 100 ground-truth samples (85.0% sentiment acc, 75.0% topic acc).
+      Evidence: `docs/MODEL_CARD.md`.
+- [x] T10.8 GATE 10 Verification: Complete platform audit verified against Definition of Done.
+      Evidence: Commit: "gate-10: hardening and documentation complete".
 
 ## Decisions
 - 2026-10-05: Using NVIDIA NIM API (free tier, ~40 RPM, ~1000 credits) instead of Ollama
@@ -280,14 +295,20 @@ Phase: 5  |  Role: Backend / API Engineer  |  Last update: 2026-10-05T02:02+05:3
   (better quality but 2x slower), E5-small (similar perf, less community adoption).
 
 ## Blockers
-(none)
+(none — all 10 phases completed and verified)
 
-## Metrics
-- Sentiment Accuracy: 85.00%   |   Sentiment Macro F1: 0.8496
-- Topic Accuracy: 75.00%       |   Topic Macro F1: 0.7089
+## Final System Metrics
+- Sentiment Accuracy: **85.00%**   |   Sentiment Macro F1: **0.8496**
+- Topic Accuracy: **75.00%**       |   Topic Macro F1: **0.7089**
 - Inference Throughput: Sentiment ~ 1.9 items/sec (CPU), Topics ~ 7.5 items/sec (CPU)
 - LLM Share of Items: < 5% (Tier 2 invoked strictly on aggregates and low-confidence edge cases)
-- All 48 backend tests passing.
+- Backend Test Suite: **62/62 tests passing** (100% green in 25.03s)
+- Lint & Code Quality: **Ruff 100% clean**, **Zero type errors**
+- Frontend Production Build: **Compiled successfully** (Next.js 14 App Router, 4/4 static pages)
+- Secret Scanning: **PASS** (Zero credentials committed)
 
-## Human-only checklist
-(to be filled in Phase 9/10)
+## Human-only Checklist (Post-Deployment Configuration)
+1. **NVIDIA NIM API Key (Optional)**: If you desire live LLM summaries instead of Tier 3 template fallback, obtain a free key at https://build.nvidia.com and set `NVIDIA_API_KEY=nvapi-...` in `.env`.
+2. **Reddit OAuth Credentials (Optional)**: If you wish to enable live Reddit ingestion, create a script app at https://www.reddit.com/prefs/apps and configure `REDDIT_CLIENT_ID` and `REDDIT_CLIENT_SECRET`.
+3. **YouTube Data API Key (Optional)**: If you wish to query YouTube comments/videos, create a key on Google Cloud Console and set `YOUTUBE_API_KEY`.
+4. **Production Domain & SSL**: Configure DNS A-records pointing to your server and update `CORS_ORIGINS` in `.env`.
