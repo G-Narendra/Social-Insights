@@ -1,0 +1,123 @@
+{
+  "timestamp": "2026-10-05T01:59:46Z",
+  "sample_size": 100,
+  "sentiment": {
+    "metrics": {
+      "accuracy": 0.85,
+      "macro_precision": 0.8693,
+      "macro_recall": 0.8571,
+      "macro_f1": 0.8496
+    },
+    "throughput_items_per_sec": 1.9,
+    "duration_seconds": 51.554,
+    "confusion_matrix": {
+      "positive": {
+        "positive": 25,
+        "neutral": 9,
+        "negative": 1
+      },
+      "neutral": {
+        "positive": 0,
+        "neutral": 30,
+        "negative": 0
+      },
+      "negative": {
+        "positive": 2,
+        "neutral": 3,
+        "negative": 30
+      }
+    }
+  },
+  "topics": {
+    "metrics": {
+      "accuracy": 0.75,
+      "macro_precision": 0.7246,
+      "macro_recall": 0.7379,
+      "macro_f1": 0.7089
+    },
+    "throughput_items_per_sec": 7.5,
+    "duration_seconds": 13.295,
+    "confusion_matrix": {
+      "product": {
+        "product": 3,
+        "pricing": 0,
+        "customer_service": 0,
+        "quality": 1,
+        "competitors": 5,
+        "complaints": 2,
+        "features": 0,
+        "other": 3
+      },
+      "pricing": {
+        "product": 0,
+        "pricing": 16,
+        "customer_service": 1,
+        "quality": 0,
+        "competitors": 0,
+        "complaints": 0,
+        "features": 0,
+        "other": 0
+      },
+      "customer_service": {
+        "product": 0,
+        "pricing": 0,
+        "customer_service": 13,
+        "quality": 1,
+        "competitors": 0,
+        "complaints": 1,
+        "features": 0,
+        "other": 0
+      },
+      "quality": {
+        "product": 0,
+        "pricing": 0,
+        "customer_service": 1,
+        "quality": 13,
+        "competitors": 0,
+        "complaints": 0,
+        "features": 0,
+        "other": 2
+      },
+      "competitors": {
+        "product": 0,
+        "pricing": 0,
+        "customer_service": 0,
+        "quality": 0,
+        "competitors": 12,
+        "complaints": 0,
+        "features": 0,
+        "other": 0
+      },
+      "complaints": {
+        "product": 0,
+        "pricing": 0,
+        "customer_service": 0,
+        "quality": 0,
+        "competitors": 0,
+        "complaints": 7,
+        "features": 0,
+        "other": 0
+      },
+      "features": {
+        "product": 0,
+        "pricing": 0,
+        "customer_service": 0,
+        "quality": 0,
+        "competitors": 0,
+        "complaints": 0,
+        "features": 9,
+        "other": 2
+      },
+      "other": {
+        "product": 2,
+        "pricing": 1,
+        "customer_service": 0,
+        "quality": 0,
+        "competitors": 3,
+        "complaints": 0,
+        "features": 0,
+        "other": 2
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # PROGRESS
 
 ## Current status
-Phase: 4  |  Role: ML / LLM Engineer  |  Last update: 2026-10-05T01:55+05:30
+Phase: 5  |  Role: Backend / API Engineer  |  Last update: 2026-10-05T02:02+05:30
 
 ## Environment
 - Python: 3.12.8   venv: .venv (confirmed sys.prefix: C:\Users\naren\Downloads\Social-Insights\.venv)
@@ -87,7 +87,28 @@ Phase: 4  |  Role: ML / LLM Engineer  |  Last update: 2026-10-05T01:55+05:30
       Evidence: 14/14 tests pass in `backend/tests/unit/test_processing.py`. Benchmark of 30 mentions correctly filtered 10 good, 10 duplicate, 10 bad. Single-run test of 500 mentions processed with 300 kept, 200 dropped, drop reasons recorded in DB. GATE 3 PASSED.
 
 ### Phase 4: AI/NLP layer
-- [ ] T4.1-T4.11 (not started)
+- [x] T4.1 Model loader with lazy loading, CPU thread pinning, and local caches (.cache/huggingface, .cache/sbert)
+      Evidence: `app/ml/model_loader.py` implemented with project-local cache directories and torch 2-thread limitation.
+- [x] T4.2 Sentiment model (Twitter-RoBERTa 3-class batched inference on CPU)
+      Evidence: `app/ml/sentiment.py` achieves 85.00% accuracy and 0.8496 macro F1 on 100-mention ground-truth benchmark.
+- [x] T4.3 Topic classifier (sentence embeddings all-MiniLM-L6-v2 vs 8 topic prototype centroids + keyword boosts)
+      Evidence: `app/ml/topics.py` achieves 75.00% accuracy and 0.7089 macro F1 on 100-mention benchmark.
+- [x] T4.4 Confidence gating for borderline predictions
+      Evidence: `sentiment.py` outputs `is_low_confidence` flag for scores < 0.55.
+- [x] T4.5 LLMClient abstraction with NVIDIA NIM backend (Llama 3.1 8B, OpenAI-compatible API)
+      Evidence: `app/ml/llm_client.py` connects to NVIDIA NIM with timeout, retry repair, and fallback when key missing.
+- [x] T4.6 Prompt templates in versioned files (summary_v1.txt, insights_v1.txt with injection defense)
+      Evidence: Created in `app/ml/prompts/` with strict JSON schema and XML-like injection isolation tags.
+- [x] T4.7 Summarizer (context budgeting + executive synthesis)
+      Evidence: `app/ml/summarizer.py` builds compact context from aggregates and generates 3-5 sentence digest.
+- [x] T4.8 Template fallback summary (Tier 3 deterministic synthesis)
+      Evidence: `_generate_template_summary()` produces factual, zero-hallucination summaries from stats offline.
+- [x] T4.9 Result caching by (keyword, data_fingerprint)
+      Evidence: Implemented in `summarizer.py` via `compute_data_fingerprint()`; verified in tests.
+- [x] T4.10 Hand-labelled evaluation benchmark (100 real samples)
+      Evidence: `backend/eval/labelled_sample.jsonl` created. `run_eval.py` executed: Sentiment Macro F1=0.8496, Topic Macro F1=0.7089. Full `docs/MODEL_CARD.md` published.
+- [x] T4.11 Performance benchmark
+      Evidence: Sentiment throughput: 1.9 items/sec on CPU; Topic throughput: 7.5 items/sec on CPU. GATE 4 PASSED.
 
 ### Phase 5: API
 - [ ] T5.1-T5.16 (not started)
@@ -129,7 +150,11 @@ Phase: 4  |  Role: ML / LLM Engineer  |  Last update: 2026-10-05T01:55+05:30
 (none)
 
 ## Metrics
-(not yet measured)
+- Sentiment Accuracy: 85.00%   |   Sentiment Macro F1: 0.8496
+- Topic Accuracy: 75.00%       |   Topic Macro F1: 0.7089
+- Inference Throughput: Sentiment ~ 1.9 items/sec (CPU), Topics ~ 7.5 items/sec (CPU)
+- LLM Share of Items: < 5% (Tier 2 invoked strictly on aggregates and low-confidence edge cases)
+- All 48 backend tests passing.
 
 ## Human-only checklist
 (to be filled in Phase 9/10)

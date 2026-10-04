@@ -1,0 +1,78 @@
+"""
+Lazy singleton model loader for CPU-optimized inference.
+Configures project-local model caches (.cache/) and thread-safe singleton instances.
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+from pathlib import Path
+from typing import Any
+
+import torch
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+from sentence_transformers import SentenceTransformer
+
+logger = logging.getLogger(__name__)
+
+# Enforce project-local model caches
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+CACHE_DIR = PROJECT_ROOT / ".cache"
+HF_CACHE = CACHE_DIR / "huggingface"
+SBERT_CACHE = CACHE_DIR / "sbert"
+
+os.environ["HF_HOME"] = str(HF_CACHE)
+os.environ["TRANSFORMERS_CACHE"] = str(HF_CACHE)
+os.environ["SENTENCE_TRANSFORMERS_HOME"] = str(SBERT_CACHE)
+
+# Limit CPU threads to avoid saturating host cores
+torch.set_num_threads(2)
+
+# Model identifiers
+SENTIMENT_MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+
+_sentiment_pipeline = None
+_embedding_model = None
+
+
+def get_sentiment_pipeline() -> Any:
+    """Lazy load singleton sentiment pipeline."""
+    global _sentiment_pipeline
+    if _sentiment_pipeline is None:
+        logger.info("Loading sentiment model: %s on CPU...", SENTIMENT_MODEL_NAME)
+        tokenizer = AutoTokenizer.from_pretrained(
+            SENTIMENT_MODEL_NAME,
+            cache_dir=str(HF_CACHE),
+        )
+        model = AutoModelForSequenceClassification.from_pretrained(
+            SENTIMENT_MODEL_NAME,
+            cache_dir=str(HF_CACHE),
+        )
+        model.eval()
+        _sentiment_pipeline = pipeline(
+            "sentiment-analysis",
+            model=model,
+            tokenizer=tokenizer,
+            device=-1,  # Force CPU
+            top_k=None,  # Return all 3 class scores for confidence estimation
+            truncation=True,
+            max_length=128,
+        )
+        logger.info("Sentiment model successfully loaded.")
+    return _sentiment_pipeline
+
+
+def get_embedding_model() -> SentenceTransformer:
+    """Lazy load singleton SentenceTransformer model."""
+    global _embedding_model
+    if _embedding_model is None:
+        logger.info("Loading embedding model: %s on CPU...", EMBEDDING_MODEL_NAME)
+        _embedding_model = SentenceTransformer(
+            EMBEDDING_MODEL_NAME,
+            cache_folder=str(SBERT_CACHE),
+            device="cpu",
+        )
+        logger.info("Embedding model successfully loaded.")
+    return _embedding_model
