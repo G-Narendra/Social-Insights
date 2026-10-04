@@ -1,0 +1,117 @@
+version: "3.8"
+
+services:
+  # ============================================================================
+  # Backend API & AI Intelligence Pipeline
+  # ============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: social_insights_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/social_insights.db
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - INTERNAL_SECRET=${INTERNAL_SECRET:-dev-internal-secret-change-in-production}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - NVIDIA_MODEL=${NVIDIA_MODEL:-meta/llama-3.1-8b-instruct}
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID:-}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET:-}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
+      - HF_HOME=/app/.cache/huggingface
+      - SENTENCE_TRANSFORMERS_HOME=/app/.cache/sbert
+      - TORCH_NUM_THREADS=2
+    volumes:
+      - backend_data:/app/data
+      - model_cache:/app/.cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - internal_net
+
+  # ============================================================================
+  # Frontend Next.js Web Dashboard
+  # ============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: social_insights_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - INTERNAL_API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - internal_net
+
+  # ============================================================================
+  # Optional Production Database (PostgreSQL 16)
+  # Activated with: docker compose --profile postgres up
+  # ============================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: social_insights_postgres
+    restart: unless-stopped
+    profiles:
+      - postgres
+    environment:
+      - POSTGRES_DB=social_insights
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_secure_pass}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d social_insights"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal_net
+
+  # ============================================================================
+  # Optional Local LLM Server (Ollama)
+  # Activated with: docker compose --profile ollama up
+  # ============================================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: social_insights_ollama
+    restart: unless-stopped
+    profiles:
+      - ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_cache:/root/.ollama
+    networks:
+      - internal_net
+
+volumes:
+  backend_data:
+    driver: local
+  model_cache:
+    driver: local
+  pg_data:
+    driver: local
+  ollama_cache:
+    driver: local
+
+networks:
+  internal_net:
+    driver: bridge

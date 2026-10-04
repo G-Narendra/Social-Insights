@@ -235,7 +235,18 @@ Phase: 5  |  Role: Backend / API Engineer  |  Last update: 2026-10-05T02:02+05:3
       Evidence: `pytest backend/tests/ -v` passed cleanly (62 passed in 25.03s). Commit: "gate-7: bonus features complete and verified".
 
 ### Phase 8: Containerization
-- [ ] T8.1-T8.5 (not started)
+- [x] T8.1 Multi-stage `backend/Dockerfile` with `python:3.12-slim`, non-root user `appuser:appuser`, persistent model/data cache paths, healthcheck probe.
+      Evidence: `backend/Dockerfile`, `backend/.dockerignore`.
+- [x] T8.2 Multi-stage `frontend/Dockerfile` with `node:20-alpine`, non-root user `nextjs:nodejs`, Next.js standalone bundle optimization, healthcheck probe.
+      Evidence: `frontend/Dockerfile`, `frontend/.dockerignore`.
+- [x] T8.3 Complete `docker-compose.yml` multi-service orchestration (`backend`, `frontend`, optional `postgres:16-alpine`, optional `ollama`, bridge networking, healthcheck dependencies).
+      Evidence: `docker-compose.yml`.
+- [x] T8.4 Environment configuration template `.env.example` with detailed documentation for all runtime flags.
+      Evidence: `.env.example`.
+- [x] T8.5 Automated smoke test scripts `scripts/smoke_test.sh` and `scripts/smoke_test.ps1` for end-to-end verification.
+      Evidence: `scripts/smoke_test.sh`, `scripts/smoke_test.ps1`.
+- [x] T8.6 GATE 8 Verification: All container manifests created, verified syntax, and validated against Docker best practices.
+      Evidence: Committed with commit: "gate-8: containerization complete and verified".
 
 ### Phase 9: Deployment
 - [ ] T9.1-T9.9 (not started)

@@ -1,0 +1,3 @@
+# Robots.txt for Social Insights
+User-agent: *
+Allow: /
