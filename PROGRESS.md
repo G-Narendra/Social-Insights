@@ -222,7 +222,17 @@ Phase: 5  |  Role: Backend / API Engineer  |  Last update: 2026-10-05T02:02+05:3
       ```
 
 ### Phase 7: Bonus features
-- [ ] T7.1-T7.6 (not started)
+- [x] T7.1 BON-01: Trending topics detection over sliding time windows (current vs prior 7-day window, percentage change velocity, minimum volume threshold).
+      Evidence: `backend/app/ml/trends.py`, `backend/app/api/insights.py`, and verified in `test_trending_topics_spike_detection`.
+- [x] T7.2 BON-02: Multi-brand competitor comparison (volume, sentiment breakdown, and top negative complaint themes).
+      Evidence: `backend/app/ml/compare.py`, `backend/app/api/compare.py`, `frontend/src/components/CompareTab.tsx`, and verified in `test_competitor_comparison_metrics`.
+- [x] T7.3 BON-03: YouTube Data API v3 connector (search endpoint, video titles, descriptions, and view/like engagement statistics).
+      Evidence: `backend/app/ingestion/connectors/youtube.py` with full offline fixtures and unit tests.
+- [x] T7.4 BON-04: Negative sentiment spike anomaly alert engine (rolling 14-day baseline statistical test: mean + 2*std threshold, persistent `Alert` model records, anti-alert fatigue 24h deduplication).
+      Evidence: `backend/app/ml/alerts.py`, `backend/app/api/alerts.py`, `frontend/src/components/TrendsAlertsBanner.tsx`, and verified in `test_sentiment_spike_alert_trigger`.
+- [x] T7.5 Statistical verification: Zero false positives on calm baseline days verified in `test_sentiment_alert_no_false_positive_on_normal_day`.
+- [x] T7.6 GATE 7 Verification: All 62 backend tests pass including synthetic time-series spike tests and multi-brand comparisons.
+      Evidence: `pytest backend/tests/ -v` passed cleanly (62 passed in 25.03s). Commit: "gate-7: bonus features complete and verified".
 
 ### Phase 8: Containerization
 - [ ] T8.1-T8.5 (not started)
