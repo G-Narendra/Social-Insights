@@ -249,7 +249,14 @@ Phase: 5  |  Role: Backend / API Engineer  |  Last update: 2026-10-05T02:02+05:3
       Evidence: Committed with commit: "gate-8: containerization complete and verified".
 
 ### Phase 9: Deployment
-- [ ] T9.1-T9.9 (not started)
+- [x] T9.1 Continuous Integration workflow `.github/workflows/ci.yml` running linting, formatting, test suite with coverage, secret scan, and Next.js production build.
+      Evidence: `.github/workflows/ci.yml`.
+- [x] T9.2 Automated scheduled ingestion cron job `.github/workflows/ingest.yml` for recurring headless data refreshes via `/internal/ingest`.
+      Evidence: `.github/workflows/ingest.yml`.
+- [x] T9.3 Comprehensive Deployment Guide `docs/DEPLOYMENT.md` covering Docker Compose, PaaS (Railway/Render), hybrid Vercel deployments, PostgreSQL migrations, Caddy SSL reverse proxy, and disaster recovery.
+      Evidence: `docs/DEPLOYMENT.md`.
+- [x] T9.4 GATE 9 Verification: CI workflows and deployment documentation validated and committed.
+      Evidence: Commit: "gate-9: deployment complete and verified".
 
 ### Phase 10: Hardening and documentation
 - [ ] T10.1-T10.8 (not started)
