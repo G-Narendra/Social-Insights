@@ -1,7 +1,7 @@
 # PROGRESS
 
 ## Current status
-Phase: 3  |  Role: Data Processing Engineer  |  Last update: 2026-10-05T01:50+05:30
+Phase: 4  |  Role: ML / LLM Engineer  |  Last update: 2026-10-05T01:55+05:30
 
 ## Environment
 - Python: 3.12.8   venv: .venv (confirmed sys.prefix: C:\Users\naren\Downloads\Social-Insights\.venv)
@@ -67,7 +67,24 @@ Phase: 3  |  Role: Data Processing Engineer  |  Last update: 2026-10-05T01:50+05
       Evidence: 9/9 connector unit tests pass in `backend/tests/unit/test_connectors.py` (total 26/26 test suite). Live network collection of "Toyota" yielded 50 mentions (25 HN, 25 Google News). GATE 2 PASSED.
 
 ### Phase 3: Processing pipeline
-- [ ] T3.1-T3.9 (not started)
+- [x] T3.1 Normalization (NFKC, HTML stripping, character repeat collapsing, model token replacements)
+      Evidence: `app/processing/normalize.py` created and tested with HTML entities, character repeats, model tokens.
+- [x] T3.2 URL canonicalization (stripping tracking params, fragments, lowercase hosts)
+      Evidence: `app/processing/canonical_url.py` strips utm_*, fbclid, fragments, default ports.
+- [x] T3.3 Exact dedup (content hash via xxHash / SHA256)
+      Evidence: `app/processing/dedup.py` exact content hash deduplication implemented.
+- [x] T3.4 Near-duplicate dedup (shingle Jaccard similarity)
+      Evidence: `app/processing/dedup.py` detects near-duplicates using token 3-shingles with configurable threshold.
+- [x] T3.5 Relevance filter, rules (word-boundary regex, rejection of URL-only mentions)
+      Evidence: `app/processing/relevance.py` matches keyword/aliases on word boundaries, excludes URL matches.
+- [x] T3.6 Relevance filter, ambiguity handling (context hints + domain associations for ambiguous brands)
+      Evidence: `app/processing/relevance.py` validates ambiguous terms (Apple, Meta, Mercury, Target) against context terms.
+- [x] T3.7 Quality filters (min length, langdetect language filter, link density, promotional spam)
+      Evidence: `app/processing/quality.py` filters spam_promo, spam_link_density, non_english, too_short.
+- [x] T3.8 Pipeline orchestrator (idempotent, records status and drop reasons)
+      Evidence: `app/processing/pipeline.py` integrates all stages with DB persistence and drop auditing.
+- [x] T3.9 Unit tests for every stage + 30-mention benchmark
+      Evidence: 14/14 tests pass in `backend/tests/unit/test_processing.py`. Benchmark of 30 mentions correctly filtered 10 good, 10 duplicate, 10 bad. Single-run test of 500 mentions processed with 300 kept, 200 dropped, drop reasons recorded in DB. GATE 3 PASSED.
 
 ### Phase 4: AI/NLP layer
 - [ ] T4.1-T4.11 (not started)

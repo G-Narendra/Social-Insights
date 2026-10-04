@@ -55,6 +55,13 @@ async def init_db() -> None:
     logger.info("Database engine created for %s", url.split("@")[-1] if "@" in url else url)
 
 
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Get the active sessionmaker factory."""
+    if _session_factory is None:
+        raise RuntimeError("Database not initialized. Call init_db() first.")
+    return _session_factory
+
+
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """Yield a database session for dependency injection."""
     if _session_factory is None:
