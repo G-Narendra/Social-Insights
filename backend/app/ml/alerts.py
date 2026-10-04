@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import datetime
 import math
-from typing import Sequence
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Alert, Mention
-from app.schemas.insights import AlertResponse
 
 
 async def evaluate_sentiment_spike_alerts(
@@ -29,15 +27,15 @@ async def evaluate_sentiment_spike_alerts(
     Evaluate if today's negative sentiment ratio constitutes a statistically significant spike.
     Baseline = mean + k * std of daily negative share over previous 14 days.
     """
-    now = datetime.datetime.now(datetime.timezone.utc)
-    today_start = datetime.datetime(now.year, now.month, now.day, tzinfo=datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
+    today_start = datetime.datetime(now.year, now.month, now.day, tzinfo=datetime.UTC)
     baseline_start = today_start - datetime.timedelta(days=baseline_days)
 
     # 1. Fetch today's volume & negative count
     today_query = (
         select(
             func.count(Mention.id).label("total"),
-            func.sum(func.case((Mention.sentiment == "negative", 1), else_=0)).label("neg"),
+            func.sum(case((Mention.sentiment == "negative", 1), else_=0)).label("neg"),
         )
         .where(Mention.keyword_id == keyword_id)
         .where(Mention.status == "done")
@@ -130,7 +128,7 @@ async def _create_or_get_alert(
     details: dict,
 ) -> Alert:
     """Check for existing unresolved alert in last 24h to avoid alert fatigue."""
-    twenty_four_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=24)
+    twenty_four_hours_ago = datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=24)
     existing_query = (
         select(Alert)
         .where(Alert.keyword_id == keyword_id)
@@ -149,7 +147,7 @@ async def _create_or_get_alert(
         severity=severity,
         message=message,
         details=details,
-        created_at=datetime.datetime.now(datetime.timezone.utc),
+        created_at=datetime.datetime.now(datetime.UTC),
     )
     session.add(new_alert)
     await session.commit()

@@ -7,13 +7,12 @@ fingerprint-based result caching to prevent redundant API calls.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import re
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import desc, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Keyword, Mention, Summary
@@ -193,10 +192,14 @@ REPRESENTATIVE SAMPLES:
 """
     for mid, text, sent, top in samples:
         safe_text = (text or "")[:180].replace("<", "&lt;").replace(">", "&gt;")
-        user_context += f'<mention id="{mid}" sentiment="{sent}" topic="{top}">{safe_text}</mention>\n'
+        user_context += (
+            f'<mention id="{mid}" sentiment="{sent}" topic="{top}">{safe_text}</mention>\n'
+        )
 
     # 1. Generate text summary
-    summary_prompt = user_context + "\nSynthesize a 3-5 sentence executive summary in paragraph form."
+    summary_prompt = (
+        user_context + "\nSynthesize a 3-5 sentence executive summary in paragraph form."
+    )
     response = await client._client.chat.completions.create(
         model=client.model,
         messages=[
@@ -211,7 +214,8 @@ REPRESENTATIVE SAMPLES:
     # 2. Generate structured insights JSON
     insights_json = await client.generate_json(
         system_prompt=insights_sys_prompt,
-        user_prompt=user_context + "\nExtract emerging complaints, requested features, pain points, positive themes, and opportunities.",
+        user_prompt=user_context
+        + "\nExtract emerging complaints, requested features, pain points, positive themes, and opportunities.",
     )
 
     insights_obj = StructuredInsights()
@@ -241,7 +245,9 @@ def _generate_template_summary(
     # Determine dominant sentiment
     if pos_pct >= 45.0:
         dominant = "predominantly positive"
-        tone_clause = f"Consumers express high satisfaction, accounting for {pos_pct}% of total sentiment."
+        tone_clause = (
+            f"Consumers express high satisfaction, accounting for {pos_pct}% of total sentiment."
+        )
     elif neg_pct >= 40.0:
         dominant = "predominantly critical"
         tone_clause = f"Negative sentiment dominates discussion at {neg_pct}%, indicating elevated consumer frustration."
@@ -274,7 +280,9 @@ def _generate_template_insights(
     stats: OverviewStatsResponse,
 ) -> StructuredInsights:
     """Extract structured insights from samples and topic distributions deterministically."""
-    feature_patterns = re.compile(r"\b(wish|should add|would love|missing|needs|hope)\b", re.IGNORECASE)
+    feature_patterns = re.compile(
+        r"\b(wish|should add|would love|missing|needs|hope)\b", re.IGNORECASE
+    )
 
     emerging_complaints = []
     requested_features = []
@@ -296,17 +304,18 @@ def _generate_template_insights(
                 )
             )
 
-        # Pain points
+        # Pain points and emerging complaints
         if sent == "negative":
-            pain_points.append(
-                InsightItem(
-                    title=f"Critical Issue in {top.title() if top else 'Quality'}",
-                    description=t[:120] + "...",
-                    evidence_mention_ids=[mid],
-                    volume=1,
-                    sentiment="negative",
-                )
+            item = InsightItem(
+                title=f"Critical Issue in {top.title() if top else 'Quality'}",
+                description=t[:120] + "...",
+                evidence_mention_ids=[mid],
+                volume=1,
+                sentiment="negative",
             )
+            pain_points.append(item)
+            if top in ["complaints", "quality"]:
+                emerging_complaints.append(item)
 
         # Positive themes
         if sent == "positive":
@@ -326,7 +335,9 @@ def _generate_template_insights(
             InsightItem(
                 title="Service Quality Differentiation",
                 description=f"Addressing top complaints in {stats.top_topics[0].topic if stats.top_topics else 'pricing'} offers immediate brand perception uplift.",
-                evidence_mention_ids=[p.evidence_mention_ids[0] for p in pain_points[:2] if p.evidence_mention_ids],
+                evidence_mention_ids=[
+                    p.evidence_mention_ids[0] for p in pain_points[:2] if p.evidence_mention_ids
+                ],
                 volume=len(pain_points),
             )
         )

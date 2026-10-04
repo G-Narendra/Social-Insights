@@ -82,8 +82,14 @@ class LLMClient:
             # Retry once with repair prompt
             try:
                 repair_messages = [
-                    {"role": "system", "content": "You are a JSON repair assistant. Output ONLY valid JSON matching the schema."},
-                    {"role": "user", "content": f"Fix the following output into valid JSON:\n\n{raw_content if 'raw_content' in locals() else user_prompt}"},
+                    {
+                        "role": "system",
+                        "content": "You are a JSON repair assistant. Output ONLY valid JSON matching the schema.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Fix the following output into valid JSON:\n\n{raw_content if 'raw_content' in locals() else user_prompt}",
+                    },
                 ]
                 repair_res = await self._client.chat.completions.create(
                     model=self.model,

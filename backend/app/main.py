@@ -1,9 +1,6 @@
 """
 FastAPI application factory and startup.
-
-This is the entry point. It wires together the API routes, middleware,
-and startup/shutdown lifecycle hooks. The app is kept thin — all logic
-lives in services, and all config comes from the settings module.
+Wires routers, CORS, structured logging, consistent error formatting, and health checks.
 """
 
 from __future__ import annotations
@@ -12,12 +9,24 @@ import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
+from app.api import (
+    alerts,
+    collect,
+    compare,
+    insights,
+    internal,
+    keywords,
+    mentions,
+    stats,
+)
 from app.config import get_settings
-from app.db.session import init_db
+from app.db.session import close_db, get_session_factory, init_db
 from app.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -28,7 +37,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage startup and shutdown tasks."""
     setup_logging()
     settings = get_settings()
-    logger.info("Starting Social Insights (env=%s)", settings.app_env)
+    logger.info("Starting Social Insights API (env=%s)", settings.app_env)
 
     # Initialize database tables
     await init_db()
@@ -36,7 +45,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
-    logger.info("Shutting down Social Insights")
+    logger.info("Shutting down Social Insights API")
+    await close_db()
 
 
 def create_app() -> FastAPI:
@@ -61,7 +71,32 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Global exception handler — never leak stack traces
+    # HTTPException handler — consistent {error: {code, message}} format
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+        code = "error"
+        message = str(exc.detail)
+        if isinstance(exc.detail, dict):
+            code = exc.detail.get("code", "error")
+            message = exc.detail.get("message", str(exc.detail))
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"error": {"code": code, "message": message}},
+        )
+
+    # Validation error handler — consistent format for invalid client input (HTTP 422)
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        details = exc.errors()
+        err_msg = details[0].get("msg") if details else "Invalid request data"
+        return JSONResponse(
+            status_code=422,
+            content={"error": {"code": "validation_error", "message": err_msg}},
+        )
+
+    # Global unhandled exception handler — never leak stack traces
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled error on %s %s", request.method, request.url.path)
@@ -72,17 +107,37 @@ def create_app() -> FastAPI:
             },
         )
 
-    # Health endpoints
+    # Liveness health check
     @app.get("/health", tags=["health"])
     async def health() -> dict[str, str]:
         """Basic liveness check."""
         return {"status": "ok"}
 
+    # Readiness check — verifies database connectivity
     @app.get("/ready", tags=["health"])
     async def ready() -> dict[str, str]:
         """Readiness check — verifies DB connectivity."""
-        # Will be enhanced once DB is fully wired
-        return {"status": "ready"}
+        try:
+            factory = get_session_factory()
+            async with factory() as session:
+                await session.execute(text("SELECT 1"))
+            return {"status": "ready"}
+        except Exception as exc:
+            logger.error("Readiness check failed: %s", exc)
+            return JSONResponse(
+                status_code=503,
+                content={"status": "not_ready", "reason": "Database connection failed"},
+            )
+
+    # Mount API routers
+    app.include_router(collect.router)
+    app.include_router(keywords.router)
+    app.include_router(mentions.router)
+    app.include_router(stats.router)
+    app.include_router(insights.router)
+    app.include_router(compare.router)
+    app.include_router(alerts.router)
+    app.include_router(internal.router)
 
     return app
 

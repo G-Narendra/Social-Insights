@@ -10,7 +10,6 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
-from typing import Sequence
 
 import numpy as np
 
@@ -76,12 +75,30 @@ TOPIC_PROTOTYPES = {
 
 # Rule boosts for unambiguous lexical indicators
 KEYWORD_BOOSTS = {
-    "pricing": re.compile(r"\b(price|pricing|msrp|cost|expensive|markup|discount|lease|financing|\$\d+)\b", re.IGNORECASE),
-    "quality": re.compile(r"\b(reliable|reliability|durable|durability|recall|breakdown|transmission|squeak|rattle)\b", re.IGNORECASE),
-    "customer_service": re.compile(r"\b(dealer|dealership|salesman|sales rep|service department|warranty claim|support agent)\b", re.IGNORECASE),
-    "competitors": re.compile(r"\b(honda|ford|hyundai|tesla|kia|subaru|nissan|chevrolet|mazda|competitor|rival)\b", re.IGNORECASE),
-    "complaints": re.compile(r"\b(lemon|lawsuit|regret|furious|horrible|terrible|awful|scam|unacceptable)\b", re.IGNORECASE),
-    "features": re.compile(r"\b(carplay|android auto|infotainment|mpg|fuel economy|cruise control|heated seats|sound system)\b", re.IGNORECASE),
+    "pricing": re.compile(
+        r"\b(price|pricing|msrp|cost|expensive|markup|discount|lease|financing|\$\d+)\b",
+        re.IGNORECASE,
+    ),
+    "quality": re.compile(
+        r"\b(reliable|reliability|durable|durability|recall|breakdown|transmission|squeak|rattle)\b",
+        re.IGNORECASE,
+    ),
+    "customer_service": re.compile(
+        r"\b(dealer|dealership|salesman|sales rep|service department|warranty claim|support agent)\b",
+        re.IGNORECASE,
+    ),
+    "competitors": re.compile(
+        r"\b(honda|ford|hyundai|tesla|kia|subaru|nissan|chevrolet|mazda|competitor|rival)\b",
+        re.IGNORECASE,
+    ),
+    "complaints": re.compile(
+        r"\b(lemon|lawsuit|regret|furious|horrible|terrible|awful|scam|unacceptable)\b",
+        re.IGNORECASE,
+    ),
+    "features": re.compile(
+        r"\b(carplay|android auto|infotainment|mpg|fuel economy|cruise control|heated seats|sound system)\b",
+        re.IGNORECASE,
+    ),
 }
 
 _prototype_centroids: dict[str, np.ndarray] | None = None
@@ -150,7 +167,7 @@ def classify_topics_batch(
 
     for i, sim_row in enumerate(similarities):
         text = cleaned[i]
-        scores = dict(zip(topic_names, sim_row))
+        scores = dict(zip(topic_names, sim_row, strict=False))
 
         # Apply keyword rule boosts (+0.12 bonus for explicit lexical markers)
         for topic, pattern in KEYWORD_BOOSTS.items():

@@ -176,29 +176,32 @@ class TestFullPipelineBenchmark:
         ]
 
         # 10 Duplicate mentions: 5 exact text duplicates (duplicate_hash) + 5 identical URL duplicates (duplicate_url)
-        duplicate_mentions = [
-            # 5 exact content duplicates
-            RawMention(
-                source="hackernews",
-                source_id=f"dup_hash_{i}",
-                title=f"Review {i} of Toyota vehicle",
-                text=f"The 2026 Toyota RAV4 hybrid model {i} has excellent fuel efficiency and comfort.",
-                keyword="Toyota",
-                url=f"https://hackernews.com/item/{i}",
-            )
-            for i in range(5)
-        ] + [
-            # 5 identical URL duplicates with different text
-            RawMention(
-                source="reddit",
-                source_id=f"dup_url_{i}",
-                title=f"Alternative title {i}",
-                text=f"Toyota discussion with alternative text {i} but pointing to same canonical article.",
-                keyword="Toyota",
-                url=f"https://reddit.com/r/cars/good_{i + 5}",  # same canonical URL as good_5..good_9
-            )
-            for i in range(5)
-        ]
+        duplicate_mentions = (
+            [
+                # 5 exact content duplicates
+                RawMention(
+                    source="hackernews",
+                    source_id=f"dup_hash_{i}",
+                    title=f"Review {i} of Toyota vehicle",
+                    text=f"The 2026 Toyota RAV4 hybrid model {i} has excellent fuel efficiency and comfort.",
+                    keyword="Toyota",
+                    url=f"https://hackernews.com/item/{i}",
+                )
+                for i in range(5)
+            ]
+            + [
+                # 5 identical URL duplicates with different text
+                RawMention(
+                    source="reddit",
+                    source_id=f"dup_url_{i}",
+                    title=f"Alternative title {i}",
+                    text=f"Toyota discussion with alternative text {i} but pointing to same canonical article.",
+                    keyword="Toyota",
+                    url=f"https://reddit.com/r/cars/good_{i + 5}",  # same canonical URL as good_5..good_9
+                )
+                for i in range(5)
+            ]
+        )
 
         # 10 Irrelevant / spam / bad quality mentions
         bad_mentions = [

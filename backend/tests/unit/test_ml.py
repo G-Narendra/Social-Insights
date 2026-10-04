@@ -7,10 +7,9 @@ and LLM client fallbacks.
 from __future__ import annotations
 
 import pytest
-from unittest.mock import AsyncMock, patch
 
 from app.ml.llm_client import LLMClient
-from app.ml.sentiment import SentimentResult, _rule_fallback_sentiment
+from app.ml.sentiment import _rule_fallback_sentiment
 from app.ml.summarizer import (
     _generate_template_insights,
     _generate_template_summary,

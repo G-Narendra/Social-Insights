@@ -55,6 +55,12 @@ async def init_db() -> None:
     logger.info("Database engine created for %s", url.split("@")[-1] if "@" in url else url)
 
 
+def set_session_factory(factory: async_sessionmaker[AsyncSession] | None) -> None:
+    """Set or clear the active sessionmaker factory (useful for testing and background tasks)."""
+    global _session_factory
+    _session_factory = factory
+
+
 def get_session_factory() -> async_sessionmaker[AsyncSession]:
     """Get the active sessionmaker factory."""
     if _session_factory is None:

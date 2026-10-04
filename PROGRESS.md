@@ -111,7 +111,65 @@ Phase: 5  |  Role: Backend / API Engineer  |  Last update: 2026-10-05T02:02+05:3
       Evidence: Sentiment throughput: 1.9 items/sec on CPU; Topic throughput: 7.5 items/sec on CPU. GATE 4 PASSED.
 
 ### Phase 5: API
-- [ ] T5.1-T5.16 (not started)
+- [x] T5.1 FastAPI application setup with clean lifespan, database auto-initialization, and graceful disposal.
+      Evidence: `backend/app/main.py` configured with `init_db()` / `close_db()`.
+- [x] T5.2 Middleware stack (CORS with strict allow-list, structured error handlers for HTTP 404, 422, 500).
+      Evidence: `backend/app/main.py` exception handlers return standardized `{"error": {"code": ..., "message": ...}}`.
+- [x] T5.3 Health and readiness endpoints (`GET /health`, `GET /ready` with active DB probe).
+      Evidence: Verified in `test_api.py` and `scripts/gate5_smoke_test.py`.
+- [x] T5.4 Collection trigger & idempotency (`POST /api/collect`, background worker pipeline execution).
+      Evidence: `backend/app/api/collect.py` and `backend/app/services/collection_job.py`.
+- [x] T5.5 Run status & telemetry (`GET /api/runs/{id}`).
+      Evidence: Polling tested and verified returning queued, running, and succeeded states.
+- [x] T5.6 Keyword management endpoints (`GET /api/keywords`, `POST /api/keywords`).
+      Evidence: `backend/app/api/keywords.py` with alias support and context hints.
+- [x] T5.7 Mentions search & filtering (`GET /api/mentions` with sentiment, topic, source, date range, pagination).
+      Evidence: `backend/app/api/mentions.py` verified with live SQLite queries.
+- [x] T5.8 Statistical aggregates (`GET /api/stats/overview`, `GET /api/stats/timeseries`).
+      Evidence: `backend/app/api/stats.py` returns sentiment breakdowns, top topics, and daily/hourly buckets.
+- [x] T5.9 AI Insights and Executive Summaries (`GET /api/insights/summary`, `GET /api/insights`, `POST /api/insights/summary/refresh`).
+      Evidence: `backend/app/api/insights.py` integrated with Tier 2 LLM / Tier 3 template fallback and fingerprint caching.
+- [x] T5.10 Trend detection endpoint (`GET /api/insights/trends`).
+      Evidence: `backend/app/api/insights.py` detects topic velocity across rolling time windows.
+- [x] T5.11 Competitor comparison endpoint (`GET /api/compare`).
+      Evidence: `backend/app/api/compare.py` compares multi-brand sentiment, volume, and complaints.
+- [x] T5.12 Anomaly alerts endpoint (`GET /api/alerts`).
+      Evidence: `backend/app/api/alerts.py` queries persistent spike anomaly records.
+- [x] T5.13 Internal cron ingestion endpoint (`POST /internal/ingest` with `X-Internal-Secret` protection).
+      Evidence: `backend/app/api/internal.py` blocks unauthorized access and triggers background jobs.
+- [x] T5.14 Rate limiting dependency (`enforce_rate_limit`).
+      Evidence: In-memory sliding window rate limiter protects LLM synthesis endpoints.
+- [x] T5.15 Comprehensive integration test suite.
+      Evidence: `backend/tests/integration/test_api.py` (10 test suites covering all routes). All 58 backend tests passing.
+- [x] T5.16 GATE 5 Verification: Live end-to-end API smoke test passed.
+      Evidence terminal output:
+      ```
+      === GATE 5 SMOKE TEST: Testing Live REST API Endpoints ===
+      [Step 1] Checking /health and /ready...
+        /health -> 200 {'status': 'ok'}
+        /ready  -> 200 {'status': 'ready'}
+      [Step 2] Triggering POST /api/collect (keyword='Toyota', limit=20)...
+        Collection triggered successfully: run_id=5, status=queued
+      [Step 3] Polling /api/runs/5 until completed...
+        Poll 1/30: status=running
+        Poll 2/30: status=running
+        Poll 3/30: status=running
+        Poll 4/30: status=succeeded
+        Run finished successfully! Status=succeeded
+      [Step 4] Querying GET /api/mentions?keyword=Toyota&limit=5...
+        Total matching mentions in DB: 46
+        Returned page items: 20
+          Sample #1: [GOOGLENEWS] (sentiment=neutral, topic=competitors) Toyota Century SUV in Detroit: CTO Calls It a Global Model...
+          Sample #2: [GOOGLENEWS] (sentiment=neutral, topic=customer_service) Woman Walks Into Toyota Dealership Inquiring About Camry She...
+      [Step 5] Querying GET /api/stats/overview?keyword=Toyota...
+        Stats overview: total=46, sentiment={'positive': 8, 'neutral': 35, 'negative': 3, 'positive_pct': 17.4, 'neutral_pct': 76.1, 'negative_pct': 6.5}, top_topics=8, quality={'total_collected': 75, 'total_kept': 46, 'total_dropped': 29, 'drop_reasons': {'irrelevant_keyword': 26, 'non_english': 2, 'too_short': 1}}
+      [Step 6] Querying GET /api/insights/summary?keyword=Toyota...
+        Summary method: template
+        Executive summary: Public discussion regarding Toyota across 46 analyzed mentions is balanced and neutral. Public sentiment is steady with ...
+        Structured insights categories: ['emerging_complaints', 'requested_features', 'pain_points', 'positive_themes', 'opportunities']
+
+      >>> ALL GATE 5 CHECKS PASSED SUCCESSFULLY! <<<
+      ```
 
 ### Phase 6: Frontend
 - [ ] T6.1-T6.12 (not started)

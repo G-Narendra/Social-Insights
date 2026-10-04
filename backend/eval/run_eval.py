@@ -7,10 +7,8 @@ and inference latency benchmarks over the 100-sample hand-labeled benchmark.
 from __future__ import annotations
 
 import json
-import os
 import sys
 import time
-from collections import defaultdict
 from pathlib import Path
 
 # Add backend to Python path
@@ -30,7 +28,7 @@ def compute_metrics(
 ) -> dict[str, float]:
     """Calculate overall accuracy, macro precision, recall, and macro F1."""
     total = len(y_true)
-    correct = sum(1 for yt, yp in zip(y_true, y_pred) if yt == yp)
+    correct = sum(1 for yt, yp in zip(y_true, y_pred, strict=False) if yt == yp)
     accuracy = correct / total if total > 0 else 0.0
 
     precisions = []
@@ -38,9 +36,9 @@ def compute_metrics(
     f1s = []
 
     for label in labels:
-        tp = sum(1 for yt, yp in zip(y_true, y_pred) if yt == label and yp == label)
-        fp = sum(1 for yt, yp in zip(y_true, y_pred) if yt != label and yp == label)
-        fn = sum(1 for yt, yp in zip(y_true, y_pred) if yt == label and yp != label)
+        tp = sum(1 for yt, yp in zip(y_true, y_pred, strict=False) if yt == label and yp == label)
+        fp = sum(1 for yt, yp in zip(y_true, y_pred, strict=False) if yt != label and yp == label)
+        fn = sum(1 for yt, yp in zip(y_true, y_pred, strict=False) if yt == label and yp != label)
 
         p = tp / (tp + fp) if (tp + fp) > 0 else 0.0
         r = tp / (tp + fn) if (tp + fn) > 0 else 0.0
@@ -65,7 +63,7 @@ def compute_confusion_matrix(
 ) -> dict[str, dict[str, int]]:
     """Build a confusion matrix dictionary."""
     matrix = {actual: {pred: 0 for pred in labels} for actual in labels}
-    for yt, yp in zip(y_true, y_pred):
+    for yt, yp in zip(y_true, y_pred, strict=False):
         if yt in matrix and yp in matrix[yt]:
             matrix[yt][yp] += 1
     return matrix
@@ -103,7 +101,9 @@ def run_evaluation() -> dict:
 
     print(f"Sentiment Accuracy:        {sentiment_metrics['accuracy']:.2%}")
     print(f"Sentiment Macro F1:        {sentiment_metrics['macro_f1']:.4f}")
-    print(f"Sentiment Latency:         {sentiment_duration:.2f}s ({sentiment_throughput:.1f} items/sec)")
+    print(
+        f"Sentiment Latency:         {sentiment_duration:.2f}s ({sentiment_throughput:.1f} items/sec)"
+    )
     print()
 
     # 2. Evaluate Topic Classification

@@ -6,10 +6,10 @@ side-by-side across up to 4 tracked keywords.
 
 from __future__ import annotations
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Keyword, Mention
+from app.db.models import Mention
 from app.schemas.insights import CompareResponse, CompetitorMetrics
 from app.services.keyword_service import get_keyword_by_term
 from app.services.stats_service import get_overview_stats
@@ -56,9 +56,7 @@ async def compare_keywords(
             .limit(3)
         )
         complaint_rows = (await session.execute(complaints_query)).scalars().all()
-        common_complaints = [
-            (c[:100] + "..." if len(c) > 100 else c) for c in complaint_rows if c
-        ]
+        common_complaints = [(c[:100] + "..." if len(c) > 100 else c) for c in complaint_rows if c]
 
         if not common_complaints:
             common_complaints = ["No significant complaints recorded."]

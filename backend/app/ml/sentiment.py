@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Sequence
 
 from app.ml.model_loader import get_sentiment_pipeline
 from app.processing.normalize import prepare_model_text
@@ -54,7 +53,9 @@ def analyze_sentiment_batch(
         classifier = get_sentiment_pipeline()
         outputs = classifier(cleaned_texts, batch_size=batch_size)
     except Exception as exc:
-        logger.warning("Sentiment model unavailable or failed (%s). Falling back to rule heuristics.", exc)
+        logger.warning(
+            "Sentiment model unavailable or failed (%s). Falling back to rule heuristics.", exc
+        )
         return [_rule_fallback_sentiment(t) for t in cleaned_texts]
 
     results: list[SentimentResult] = []
@@ -79,8 +80,30 @@ def analyze_sentiment_batch(
 def _rule_fallback_sentiment(text: str) -> SentimentResult:
     """Fast lexical fallback when model is unavailable or in minimal offline test modes."""
     t_lower = text.lower()
-    pos_words = {"love", "great", "excellent", "amazing", "good", "reliable", "best", "perfect", "fantastic"}
-    neg_words = {"hate", "awful", "terrible", "bad", "broken", "issue", "problem", "expensive", "fail", "markup", "recall"}
+    pos_words = {
+        "love",
+        "great",
+        "excellent",
+        "amazing",
+        "good",
+        "reliable",
+        "best",
+        "perfect",
+        "fantastic",
+    }
+    neg_words = {
+        "hate",
+        "awful",
+        "terrible",
+        "bad",
+        "broken",
+        "issue",
+        "problem",
+        "expensive",
+        "fail",
+        "markup",
+        "recall",
+    }
 
     pos_hits = sum(1 for w in pos_words if w in t_lower)
     neg_hits = sum(1 for w in neg_words if w in t_lower)

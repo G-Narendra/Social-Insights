@@ -7,6 +7,7 @@ Computes percentage changes and formats natural language trend insights.
 from __future__ import annotations
 
 import datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,7 +29,7 @@ async def detect_trends(
     Computes percentage change: (current - previous) / max(previous, 1) * 100
     Ranks top rising topics exceeding min_volume.
     """
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     current_start = now - datetime.timedelta(days=window_days)
     previous_start = now - datetime.timedelta(days=2 * window_days)
 

@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 from sentence_transformers import SentenceTransformer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 
 logger = logging.getLogger(__name__)
 
