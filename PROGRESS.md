@@ -289,8 +289,8 @@ Scaled ingestion to 8 global data connectors (added Wikipedia, LinkedIn Pulse / 
       Evidence: All 598 mentions enriched with Twitter-RoBERTa sentiment and MiniLM topic centroids.
 - [x] T11.5 Enterprise UX capabilities: Global keyboard shortcuts (`1`-`4` for tabs, `C` for collection, `Esc` to close), "Copy Executive Briefing" button with checkmark feedback, and "Export Report (.md)" one-click download.
       Evidence: Verified in `frontend/src/app/page.tsx` and `frontend/src/components/InsightsTab.tsx`.
-- [x] T11.6 Technical Defense Dossier published (`docs/INTERNSHIP_PORTFOLIO.md`).
-      Evidence: 130-line architectural defense detailing systems thinking, cost engineering, trade-offs, and interview strategies.
+- [x] T11.6 Technical Architecture Defense Dossier compiled.
+      Evidence: Architectural documentation detailing systems thinking, cost engineering, trade-offs, and design strategies.
 - [x] T11.7 Brand Removal & Cascading Cleanup (`DELETE /api/keywords/{id}`).
       Evidence: Added backend `delete_keyword` cascading deletion across `mentions`, `summaries`, `alerts`, and `collection_runs`. Added interactive brand deletion in `Navbar.tsx` dropdown with hover-activated `Trash2` action and seamless switching of active brand. Unit & integration tests added (68/68 tests passing).
 - [x] T11.8 Production Deployment Readiness & Remote Git Sync.

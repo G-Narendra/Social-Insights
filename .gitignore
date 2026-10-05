@@ -54,3 +54,8 @@ htmlcov/
 # Task files (not part of the app)
 my files/
 skills/
+*.pdf
+docs/INTERNSHIP_PORTFOLIO.md
+private/
+*.key
+*.pem

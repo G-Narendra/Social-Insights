@@ -174,99 +174,107 @@ ${summary.content}
       </div>
 
       {/* Structured Intelligence Grid */}
-      {insights && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-amber-400" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
-              Structured Product Intelligence
-            </h3>
+      {insights && (() => {
+        const emergingComplaints = insights.emerging_complaints || [];
+        const requestedFeatures = insights.requested_features || [];
+        const painPoints = insights.pain_points || [];
+        const positiveThemes = insights.positive_themes || [];
+        const opportunities = insights.opportunities || [];
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-amber-400" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                Structured Product Intelligence
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Emerging Complaints */}
+              <div className="glass-card rounded-2xl p-5 border-rose-500/20">
+                <div className="flex items-center gap-2 text-rose-400 mb-3">
+                  <AlertTriangle className="h-4 w-4" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider">Emerging Complaints</h4>
+                </div>
+                <div className="space-y-3">
+                  {emergingComplaints.map((item, idx) => (
+                    <InsightCard key={idx} item={item} accent="rose" />
+                  ))}
+                  {emergingComplaints.length === 0 && (
+                    <p className="text-xs text-slate-400">No severe emerging complaints detected.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Requested Features */}
+              <div className="glass-card rounded-2xl p-5 border-indigo-500/20">
+                <div className="flex items-center gap-2 text-indigo-400 mb-3">
+                  <Zap className="h-4 w-4" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider">Requested Features</h4>
+                </div>
+                <div className="space-y-3">
+                  {requestedFeatures.map((item, idx) => (
+                    <InsightCard key={idx} item={item} accent="indigo" />
+                  ))}
+                  {requestedFeatures.length === 0 && (
+                    <p className="text-xs text-slate-400">No specific feature requests detected.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Pain Points */}
+              <div className="glass-card rounded-2xl p-5 border-amber-500/20">
+                <div className="flex items-center gap-2 text-amber-400 mb-3">
+                  <AlertCircle className="h-4 w-4" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider">Core Pain Points</h4>
+                </div>
+                <div className="space-y-3">
+                  {painPoints.map((item, idx) => (
+                    <InsightCard key={idx} item={item} accent="amber" />
+                  ))}
+                  {painPoints.length === 0 && (
+                    <p className="text-xs text-slate-400">No recurring pain points logged.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Positive Themes */}
+              <div className="glass-card rounded-2xl p-5 border-emerald-500/20">
+                <div className="flex items-center gap-2 text-emerald-400 mb-3">
+                  <ThumbsUp className="h-4 w-4" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider">Positive Praises & Themes</h4>
+                </div>
+                <div className="space-y-3">
+                  {positiveThemes.map((item, idx) => (
+                    <InsightCard key={idx} item={item} accent="emerald" />
+                  ))}
+                  {positiveThemes.length === 0 && (
+                    <p className="text-xs text-slate-400">No recurring praise themes detected.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Strategic Opportunities */}
+            {opportunities.length > 0 && (
+              <div className="glass-card rounded-2xl p-5 border-violet-500/20 mt-4">
+                <div className="flex items-center gap-2 text-violet-400 mb-3">
+                  <Lightbulb className="h-4 w-4" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider">
+                    Market & Growth Opportunities
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {opportunities.map((item, idx) => (
+                    <InsightCard key={idx} item={item} accent="violet" />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Emerging Complaints */}
-            <div className="glass-card rounded-2xl p-5 border-rose-500/20">
-              <div className="flex items-center gap-2 text-rose-400 mb-3">
-                <AlertTriangle className="h-4 w-4" />
-                <h4 className="text-xs font-bold uppercase tracking-wider">Emerging Complaints</h4>
-              </div>
-              <div className="space-y-3">
-                {insights.emerging_complaints.map((item, idx) => (
-                  <InsightCard key={idx} item={item} accent="rose" />
-                ))}
-                {insights.emerging_complaints.length === 0 && (
-                  <p className="text-xs text-slate-400">No severe emerging complaints detected.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Requested Features */}
-            <div className="glass-card rounded-2xl p-5 border-indigo-500/20">
-              <div className="flex items-center gap-2 text-indigo-400 mb-3">
-                <Zap className="h-4 w-4" />
-                <h4 className="text-xs font-bold uppercase tracking-wider">Requested Features</h4>
-              </div>
-              <div className="space-y-3">
-                {insights.requested_features.map((item, idx) => (
-                  <InsightCard key={idx} item={item} accent="indigo" />
-                ))}
-                {insights.requested_features.length === 0 && (
-                  <p className="text-xs text-slate-400">No specific feature requests detected.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Pain Points */}
-            <div className="glass-card rounded-2xl p-5 border-amber-500/20">
-              <div className="flex items-center gap-2 text-amber-400 mb-3">
-                <AlertCircle className="h-4 w-4" />
-                <h4 className="text-xs font-bold uppercase tracking-wider">Core Pain Points</h4>
-              </div>
-              <div className="space-y-3">
-                {insights.pain_points.map((item, idx) => (
-                  <InsightCard key={idx} item={item} accent="amber" />
-                ))}
-                {insights.pain_points.length === 0 && (
-                  <p className="text-xs text-slate-400">No recurring pain points logged.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Positive Themes */}
-            <div className="glass-card rounded-2xl p-5 border-emerald-500/20">
-              <div className="flex items-center gap-2 text-emerald-400 mb-3">
-                <ThumbsUp className="h-4 w-4" />
-                <h4 className="text-xs font-bold uppercase tracking-wider">Positive Praises & Themes</h4>
-              </div>
-              <div className="space-y-3">
-                {insights.positive_themes.map((item, idx) => (
-                  <InsightCard key={idx} item={item} accent="emerald" />
-                ))}
-                {insights.positive_themes.length === 0 && (
-                  <p className="text-xs text-slate-400">No recurring praise themes detected.</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Strategic Opportunities */}
-          {insights.opportunities && insights.opportunities.length > 0 && (
-            <div className="glass-card rounded-2xl p-5 border-violet-500/20 mt-4">
-              <div className="flex items-center gap-2 text-violet-400 mb-3">
-                <Lightbulb className="h-4 w-4" />
-                <h4 className="text-xs font-bold uppercase tracking-wider">
-                  Market & Growth Opportunities
-                </h4>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {insights.opportunities.map((item, idx) => (
-                  <InsightCard key={idx} item={item} accent="violet" />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

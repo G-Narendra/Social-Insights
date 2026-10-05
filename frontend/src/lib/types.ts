@@ -58,6 +58,7 @@ export interface SentimentBreakdown {
   positive_pct: number;
   neutral_pct: number;
   negative_pct: number;
+  net_sentiment?: number;
 }
 
 export interface TopicCount {

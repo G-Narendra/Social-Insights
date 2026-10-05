@@ -79,11 +79,28 @@ export function OverviewTab({
     );
   }
 
-  const { total_mentions, sentiment, top_topics, quality, sources } = stats;
+  const {
+    total_mentions = 0,
+    sentiment,
+    top_topics = [],
+    quality = { total_collected: 0, total_kept: 0, total_dropped: 0, drop_reasons: {} },
+    sources = {},
+  } = stats || {};
+
+  const safeSentiment = {
+    positive: sentiment?.positive ?? 0,
+    neutral: sentiment?.neutral ?? 0,
+    negative: sentiment?.negative ?? 0,
+    positive_pct: sentiment?.positive_pct ?? 0,
+    neutral_pct: sentiment?.neutral_pct ?? 0,
+    negative_pct: sentiment?.negative_pct ?? 0,
+    net_sentiment: sentiment?.net_sentiment ?? 0,
+  };
 
   // Compute Brand Reputation Health Index (NPS-style Score: 0-100)
-  const posPct = sentiment.positive_pct || 0;
-  const negPct = sentiment.negative_pct || 0;
+  const posPct = safeSentiment.positive_pct;
+  const negPct = safeSentiment.negative_pct;
+  const neuPct = safeSentiment.neutral_pct;
   const netSentimentScore = Math.round(posPct - negPct);
   const healthScore = Math.min(100, Math.max(0, Math.round(50 + netSentimentScore / 2)));
 
@@ -173,7 +190,7 @@ export function OverviewTab({
             <span className="text-3xl font-bold tracking-tight text-emerald-400">
               {posPct.toFixed(1)}%
             </span>
-            <span className="text-xs text-slate-400">({sentiment.positive} items)</span>
+            <span className="text-xs text-slate-400">({safeSentiment.positive} items)</span>
           </div>
           <div className="w-full bg-slate-800 rounded-full h-1.5 mt-3 overflow-hidden">
             <div
@@ -193,14 +210,14 @@ export function OverviewTab({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold tracking-tight text-slate-200">
-              {sentiment.neutral_pct.toFixed(1)}%
+              {neuPct.toFixed(1)}%
             </span>
-            <span className="text-xs text-slate-400">({sentiment.neutral} items)</span>
+            <span className="text-xs text-slate-400">({safeSentiment.neutral} items)</span>
           </div>
           <div className="w-full bg-slate-800 rounded-full h-1.5 mt-3 overflow-hidden">
             <div
               className="bg-slate-400 h-1.5 rounded-full"
-              style={{ width: `${Math.min(100, sentiment.neutral_pct)}%` }}
+              style={{ width: `${Math.min(100, neuPct)}%` }}
             />
           </div>
         </div>
@@ -217,7 +234,7 @@ export function OverviewTab({
             <span className="text-3xl font-bold tracking-tight text-rose-400">
               {negPct.toFixed(1)}%
             </span>
-            <span className="text-xs text-slate-400">({sentiment.negative} items)</span>
+            <span className="text-xs text-slate-400">({safeSentiment.negative} items)</span>
           </div>
           <div className="w-full bg-slate-800 rounded-full h-1.5 mt-3 overflow-hidden">
             <div
