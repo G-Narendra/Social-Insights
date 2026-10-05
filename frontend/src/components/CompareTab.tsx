@@ -133,9 +133,6 @@ export function CompareTab({ initialKeyword, availableKeywords = [] }: CompareTa
                 <GitCompare className="h-5 w-5 text-indigo-400" />
                 Multi-Brand Competitor Intelligence
               </h3>
-              <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                BON-02
-              </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               Side-by-side volume, Share of Voice (SOV), sentiment distribution, and customer complaints

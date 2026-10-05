@@ -54,7 +54,7 @@ export function TrendsAlertsBanner({
 
   return (
     <div className="space-y-3 mb-6">
-      {/* Anomaly Alerts (BON-04) */}
+      {/* Anomaly Alerts */}
       {alerts.map((alert) => {
         const title =
           alert.title ||
@@ -120,7 +120,7 @@ export function TrendsAlertsBanner({
         );
       })}
 
-      {/* Trending Topics (BON-01) */}
+      {/* Trending Topics */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-200">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5 text-indigo-400 font-bold uppercase tracking-wider text-[11px]">

@@ -72,12 +72,9 @@ export function Navbar({
               <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
                 Social Insights
               </span>
-              <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                v1.0
-              </span>
             </div>
             <p className="text-xs text-slate-400 hidden sm:block">
-              Open-Source Social Listening & Tiered AI
+              Open-Source Social Listening & Brand Intelligence
             </p>
           </div>
         </div>

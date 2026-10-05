@@ -349,7 +349,7 @@ export default function DashboardPage() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6">
-        {/* Anomaly & Trends Banner (BON-01, BON-04) */}
+        {/* Anomaly & Trends Banner */}
         <TrendsAlertsBanner
           alerts={alerts}
           trends={trends}
@@ -371,7 +371,6 @@ export default function DashboardPage() {
             >
               <BarChart3 className="h-4 w-4" />
               <span>Overview</span>
-              <kbd className="hidden md:inline-block text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900/60 text-slate-400 border border-slate-700/50">1</kbd>
             </button>
 
             {/* Mentions */}
@@ -394,7 +393,6 @@ export default function DashboardPage() {
                   {stats.total_mentions}
                 </span>
               ) : null}
-              <kbd className="hidden md:inline-block text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900/60 text-slate-400 border border-slate-700/50">2</kbd>
             </button>
 
             {/* AI Summary & Intelligence */}
@@ -409,10 +407,9 @@ export default function DashboardPage() {
               <Bot className="h-4 w-4" />
               <span>AI Insights</span>
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-ping" />
-              <kbd className="hidden md:inline-block text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900/60 text-slate-400 border border-slate-700/50">3</kbd>
             </button>
 
-            {/* Competitor Benchmark (BON-02) */}
+            {/* Competitor Benchmark */}
             <button
               onClick={() => setActiveTab("compare")}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
@@ -423,7 +420,6 @@ export default function DashboardPage() {
             >
               <GitCompare className="h-4 w-4" />
               <span>Compare Brands</span>
-              <kbd className="hidden md:inline-block text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900/60 text-slate-400 border border-slate-700/50">4</kbd>
             </button>
           </div>
 

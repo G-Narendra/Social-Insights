@@ -325,7 +325,7 @@ export function OverviewTab({
         </div>
       </div>
 
-      {/* Brand Reputation Health Index Card (BON-02 / Enterprise Score) */}
+      {/* Brand Reputation Health Index Card */}
       <div className="glass-card rounded-2xl p-6 relative overflow-hidden border border-slate-700/80 bg-gradient-to-r from-slate-900 via-indigo-950/20 to-slate-900 shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">

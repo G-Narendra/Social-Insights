@@ -111,12 +111,12 @@ ${summary.content}
                 {method === "llm" ? (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
                     <Sparkles className="h-3 w-3" />
-                    AI: {model_name || "NVIDIA NIM Llama 3.1"}
+                    AI: {model_name || "NVIDIA NIM Llama 3.2"}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-700/40 text-slate-300 border border-slate-600/40">
                     <Cpu className="h-3 w-3" />
-                    Template Fallback (Offline Tier 3)
+                    Deterministic Analytics Engine
                   </span>
                 )}
               </div>
