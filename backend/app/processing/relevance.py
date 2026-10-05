@@ -95,17 +95,30 @@ AMBIGUOUS_TERMS = set(DOMAIN_ASSOCIATIONS.keys()) | {
 }
 
 
+def _phrase_to_regex_pattern(phrase: str) -> str:
+    """Convert a phrase into a pattern with flexible whitespace and hyphen delimiters."""
+    parts = [re.escape(p) for p in re.split(r"[-\s]+", phrase.strip()) if p]
+    if not parts:
+        return ""
+    return r"[-\s]+".join(parts)
+
+
 def build_keyword_regex(keyword: str, aliases: list[str] | None = None) -> re.Pattern:
     """Build a compiled word-boundary regular expression for keyword and all aliases."""
-    terms = [re.escape(keyword.strip())]
+    raw_terms = [keyword.strip()]
     if aliases:
         for alias in aliases:
             cleaned = alias.strip()
             if cleaned:
-                terms.append(re.escape(cleaned))
+                raw_terms.append(cleaned)
 
-    # Join with OR (|) and require word boundaries (\b)
-    pattern_str = r"\b(?:" + "|".join(terms) + r")\b"
+    pattern_parts = []
+    for term in raw_terms:
+        sub = _phrase_to_regex_pattern(term)
+        if sub:
+            pattern_parts.append(sub)
+
+    pattern_str = r"\b(?:" + "|".join(pattern_parts) + r")\b"
     return re.compile(pattern_str, re.IGNORECASE)
 
 
@@ -113,6 +126,10 @@ def is_keyword_only_in_url(raw_text: str, keyword_pattern: re.Pattern) -> bool:
     """
     Check if the keyword appears strictly within a URL string rather than actual discussion text.
     """
+    if not re.search(r"https?://\S+", raw_text):
+        return False
+    if not keyword_pattern.search(raw_text):
+        return False
     no_urls = re.sub(r"https?://\S+", "", raw_text)
     return not bool(keyword_pattern.search(no_urls))
 
@@ -126,9 +143,10 @@ def check_relevance(
 ) -> tuple[bool, str | None]:
     """
     Evaluate if a mention is relevant to the target keyword:
-    1. Must match keyword or alias on a word boundary
-    2. Must not be present exclusively in a URL
-    3. If keyword is ambiguous, verify presence of context hint or domain association terms
+    1. Must match keyword or alias on word boundaries (flexible whitespace/hyphen)
+    2. Multi-word phrases (>= 3 words) allow high-confidence token overlap (>= 65%)
+    3. Must not be present exclusively in a URL
+    4. If keyword is ambiguous, verify presence of context hint or domain association terms
     Returns (is_relevant, drop_reason).
     """
     combined_text = f"{title or ''} {text}".strip()
@@ -137,6 +155,21 @@ def check_relevance(
 
     pattern = build_keyword_regex(keyword, aliases)
     match = pattern.search(combined_text)
+
+    # For multi-word queries with 3+ significant tokens, allow high token overlap
+    if not match:
+        tokens = [
+            w.lower()
+            for w in re.findall(r"\b[a-zA-Z0-9]{3,}\b", keyword)
+            if w.lower() not in {"the", "and", "for", "with", "from", "that", "this", "about"}
+        ]
+        if len(tokens) >= 3:
+            text_lower = combined_text.lower()
+            matched_tokens = sum(
+                1 for tok in tokens if re.search(r"\b" + re.escape(tok) + r"\b", text_lower)
+            )
+            if (matched_tokens / len(tokens)) >= 0.65:
+                match = True
 
     if not match:
         return False, "irrelevant_keyword"

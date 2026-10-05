@@ -129,6 +129,12 @@ class TestRelevance:
         assert is_rel_fruit is False
         assert reason_fruit == "irrelevant_ambiguous"
 
+    def test_multi_word_token_overlap_relevance(self) -> None:
+        text = "The UAE announced a comprehensive net zero carbon strategy for future years."
+        is_rel, reason = check_relevance(text, None, "UAE Net zero 2050")
+        assert is_rel is True
+        assert reason is None
+
 
 class TestQualityFilters:
     def test_too_short_rejection(self) -> None:
