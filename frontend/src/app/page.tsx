@@ -202,6 +202,30 @@ export default function DashboardPage() {
     }
   };
 
+  const handleResolveAlert = async (id: number) => {
+    try {
+      await api.resolveAlert(id);
+      setAlerts((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      console.error("Failed to resolve alert", err);
+    }
+  };
+
+  const handleSimulateAlert = async () => {
+    if (!activeKeyword) return;
+    try {
+      const newAlert = await api.simulateSpikeAlert(activeKeyword);
+      setAlerts((prev) => [newAlert, ...prev]);
+    } catch (err) {
+      console.error("Failed to simulate alert", err);
+    }
+  };
+
+  const handleSelectSearchTerm = (term: string) => {
+    setMentionsFilters((prev) => ({ ...prev, search: term, page: 1 }));
+    setActiveTab("mentions");
+  };
+
   // Lazy tab data loading: only load data needed for active tab
   useEffect(() => {
     if (!activeKeyword) return;
@@ -275,7 +299,12 @@ export default function DashboardPage() {
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6">
         {/* Anomaly & Trends Banner (BON-01, BON-04) */}
-        <TrendsAlertsBanner alerts={alerts} trends={trends} />
+        <TrendsAlertsBanner
+          alerts={alerts}
+          trends={trends}
+          onResolveAlert={handleResolveAlert}
+          onSimulateAlert={handleSimulateAlert}
+        />
 
         {/* Tab Navigation Navigation Bar */}
         <div className="flex items-center justify-between border-b border-slate-800/80 mb-6 pb-2">
@@ -367,6 +396,7 @@ export default function DashboardPage() {
             timeseries={timeseries}
             loading={loadingStats}
             onRefresh={() => loadDashboardData(activeKeyword)}
+            onSelectSearchTerm={handleSelectSearchTerm}
           />
         )}
 

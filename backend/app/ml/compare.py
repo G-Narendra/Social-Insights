@@ -31,6 +31,11 @@ async def compare_keywords(
 
         kw = await get_keyword_by_term(session, term)
         if not kw:
+            sentiment_dict = {
+                "positive_pct": 0.0,
+                "neutral_pct": 0.0,
+                "negative_pct": 0.0,
+            }
             competitors.append(
                 CompetitorMetrics(
                     keyword=term,
@@ -38,8 +43,10 @@ async def compare_keywords(
                     positive_pct=0.0,
                     neutral_pct=0.0,
                     negative_pct=0.0,
+                    sentiment=sentiment_dict,
                     top_topics=[],
                     common_complaints=["No data collected yet. Trigger collection to analyze."],
+                    top_complaint_themes=["No data collected yet. Trigger collection to analyze."],
                 )
             )
             continue
@@ -63,15 +70,24 @@ async def compare_keywords(
 
         top_topics = [t.topic.replace("_", " ").title() for t in stats.top_topics[:3]]
 
+        sentiment_dict = {
+            "positive_pct": stats.sentiment.positive_pct,
+            "neutral_pct": stats.sentiment.neutral_pct,
+            "negative_pct": stats.sentiment.negative_pct,
+        }
+
         competitors.append(
             CompetitorMetrics(
                 keyword=kw.term,
+                keyword_id=kw.id,
                 total_mentions=stats.total_mentions,
                 positive_pct=stats.sentiment.positive_pct,
                 neutral_pct=stats.sentiment.neutral_pct,
                 negative_pct=stats.sentiment.negative_pct,
+                sentiment=sentiment_dict,
                 top_topics=top_topics,
                 common_complaints=common_complaints,
+                top_complaint_themes=common_complaints,
             )
         )
 

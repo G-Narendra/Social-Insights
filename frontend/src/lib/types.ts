@@ -142,11 +142,22 @@ export interface TrendsResponse {
 
 export interface CompetitorStats {
   keyword: string;
-  keyword_id: number;
+  keyword_id?: number;
   total_mentions: number;
-  sentiment: SentimentBreakdown;
-  top_topics: TopicCount[];
-  top_complaint_themes: string[];
+  positive_pct?: number;
+  neutral_pct?: number;
+  negative_pct?: number;
+  sentiment?: {
+    positive_pct: number;
+    neutral_pct: number;
+    negative_pct: number;
+    positive?: number;
+    neutral?: number;
+    negative?: number;
+  };
+  top_topics?: (string | TopicCount)[];
+  common_complaints?: string[];
+  top_complaint_themes?: string[];
 }
 
 export interface CompetitorComparisonResponse {
@@ -156,19 +167,23 @@ export interface CompetitorComparisonResponse {
 
 export interface AlertItem {
   id: number;
-  keyword_id: number;
-  keyword: string;
-  alert_type: string;
-  title: string;
-  description: string;
-  threshold_used: number;
-  observed_value: number;
+  keyword_id?: number;
+  keyword?: string;
+  alert_type?: string;
+  severity?: string;
+  title?: string;
+  description?: string;
+  message?: string;
+  threshold_used?: number;
+  observed_value?: number;
+  details?: Record<string, any>;
   created_at: string;
+  resolved_at?: string | null;
 }
 
 export interface AlertsResponse {
-  keyword: string;
-  alerts: AlertItem[];
+  keyword?: string;
+  alerts?: AlertItem[];
 }
 
 export interface CollectionRun {

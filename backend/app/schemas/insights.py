@@ -66,12 +66,15 @@ class CompetitorMetrics(BaseModel):
     """Comparative snapshot for a single keyword/brand."""
 
     keyword: str
-    total_mentions: int
-    positive_pct: float
-    neutral_pct: float
-    negative_pct: float
-    top_topics: list[str]
-    common_complaints: list[str]
+    keyword_id: int | None = None
+    total_mentions: int = 0
+    positive_pct: float = 0.0
+    neutral_pct: float = 0.0
+    negative_pct: float = 0.0
+    sentiment: dict[str, float] | None = None
+    top_topics: list[str] = Field(default_factory=list)
+    common_complaints: list[str] = Field(default_factory=list)
+    top_complaint_themes: list[str] = Field(default_factory=list)
 
 
 class CompareResponse(BaseModel):

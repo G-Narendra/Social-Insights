@@ -4,6 +4,7 @@
  */
 
 import {
+  AlertItem,
   AlertsResponse,
   CollectionRun,
   CompetitorComparisonResponse,
@@ -169,6 +170,19 @@ export const api = {
   async getAlerts(keyword: string): Promise<AlertsResponse> {
     const qp = new URLSearchParams({ keyword });
     return request<AlertsResponse>(`/api/alerts?${qp.toString()}`);
+  },
+
+  async resolveAlert(alertId: number): Promise<{ message: string; alert_id: number }> {
+    return request<{ message: string; alert_id: number }>(`/api/alerts/${alertId}/resolve`, {
+      method: "POST",
+    });
+  },
+
+  async simulateSpikeAlert(keyword: string, scenario = "sentiment_spike"): Promise<AlertItem> {
+    return request<AlertItem>(`/api/alerts/simulate`, {
+      method: "POST",
+      body: JSON.stringify({ keyword, scenario }),
+    });
   },
 
   // Competitor Comparison

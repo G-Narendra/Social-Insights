@@ -127,3 +127,55 @@ When evaluators assess your engineering mindset, emphasize these 4 pillars:
 | **Scan for Secrets** | `python scripts/scan_secrets.py` |
 | **Build Frontend Production** | `npm run build --prefix frontend` |
 | **Docker Compose Launch** | `docker compose up -d --build` |
+
+---
+
+## 6. High-Impact Tools & Features Engineered for Enterprise Readiness
+
+Following discussions with the engineering evaluation team, we expanded the platform with 5 specialized tools designed to match commercial SaaS platforms (Brandwatch, Meltwater):
+
+### 1. Brand Reputation Health Index (NPS Normalized 0–100)
+- **Business Problem**: Executives and brand managers need a single, reliable metric summarizing public sentiment rather than parsing raw percentages.
+- **Implementation**:
+  $$\text{Net Sentiment Score (NSS)} = \text{Positive}\% - \text{Negative}\%$$
+  $$\text{Brand Health Index} = \min\left(100, \max\left(0, 50 + \frac{\text{NSS}}{2}\right)\right)$$
+- Displays a visual spectrum bar with 4 status tiers: *Outstanding Perception* ($\ge 75$), *Healthy & Stable* ($60-74$), *Neutral/Balanced* ($45-59$), and *At Risk / High Friction* ($< 45$).
+
+### 2. Interactive Voice of Customer (VoC) Theme Cloud
+- **Business Problem**: Marketers want to know *why* customers praise or criticize their brand at a glance, without reading 500 individual posts.
+- **Implementation**: Categorizes extracted brand buzzwords into **Positive Praise Drivers** (e.g., "Reliability", "Build Quality", "Efficiency") and **Friction Points** (e.g., "Price Markups", "Delivery Delays", "Infotainment Bugs").
+- **Deep-Linking Interaction**: Clicking any buzzword dynamically filters the Mentions tab for that exact term, taking the user straight to the underlying customer posts.
+
+### 3. Universal Data Export Engine (RFC 4180 CSV & JSON)
+- **Business Problem**: Analytics and PR teams need to export filtered mentions to feed into spreadsheets, executive slide decks, or downstream BI tools (Tableau, PowerBI).
+- **Implementation**: Added client-side streaming export for both **CSV** (sanitizing formulas, escaping quotes, structured columns) and **JSON** formatted with one click, respecting all active filters.
+
+### 4. Real-Time Anomaly Simulation & Alert Lifecycle Management
+- **Business Problem**: In incident management, alerts must be actionable and testable.
+- **Implementation**:
+  - `POST /api/alerts/simulate`: Allows QA engineers and evaluators to simulate sudden negative sentiment spikes or viral volume surges.
+  - `POST /api/alerts/{id}/resolve`: Allows incident response teams to acknowledge and mark alerts as resolved, removing them from the active dashboard feed.
+
+### 5. Multi-Brand Share of Voice (SOV) & Net Sentiment Scorecard
+- **Business Problem**: Benchmarking against competitors requires understanding both total volume share and net sentiment superiority.
+- **Implementation**: The Compare Brands tab automatically computes total industry mention share (Share of Voice %) and crowns the "Brand Sentiment Leader" based on Net Sentiment Score.
+
+---
+
+## 7. Real-World Bug Triage & Root Cause Analysis
+
+### Case Study: Resolving the CompareTab Undefined Runtime Crash
+- **Symptom**: `TypeError: Cannot read properties of undefined (reading 'positive_pct') at src/components/CompareTab.tsx (175:45)` when comparing newly ingested brands (e.g., "Reliance") against uncollected brands ("Honda", "Tesla").
+- **Root Cause Analysis (RCA)**:
+  1. The backend API `/api/compare` previously returned flat schema properties (`positive_pct`, `neutral_pct`, `negative_pct`), whereas earlier iterations of the frontend component expected a nested object (`comp.sentiment.positive_pct`).
+  2. When comparing an uncollected brand with 0 mentions, `comp.sentiment` was `undefined`, causing the frontend rendering loop to crash.
+- **Defensive Engineering Fix**:
+  1. **Dual-Compatible Backend Contract**: Updated `backend/app/schemas/insights.py` and `backend/app/ml/compare.py` to populate both flat fields and the nested `sentiment` dictionary for complete backwards compatibility.
+  2. **Defensive Null-Coalescing on Frontend**: Updated `frontend/src/components/CompareTab.tsx` and `types.ts` to use optional chaining and nullish coalescing:
+     ```ts
+     const posPct = comp.sentiment?.positive_pct ?? comp.positive_pct ?? 0;
+     const neuPct = comp.sentiment?.neutral_pct ?? comp.neutral_pct ?? 0;
+     const negPct = comp.sentiment?.negative_pct ?? comp.negative_pct ?? 0;
+     ```
+  3. **Zero-Data State Handling**: Designed dedicated empty-state cards for brands with zero collected mentions, instructing the user on how to trigger collection without breaking the comparison matrix.
+

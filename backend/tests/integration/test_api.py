@@ -198,6 +198,32 @@ class TestMentionsAndStatsEndpoints:
         assert len(data["competitors"]) == 2
         assert data["competitors"][0]["keyword"] == "Apple"
 
+    @pytest.mark.asyncio
+    async def test_simulate_and_resolve_alert(self, async_client: AsyncClient) -> None:
+        sim_res = await async_client.post(
+            "/api/alerts/simulate",
+            json={"keyword": "Apple", "scenario": "sentiment_spike"},
+        )
+        assert sim_res.status_code == 200
+        alert_data = sim_res.json()
+        assert alert_data["alert_type"] == "sentiment_spike"
+        assert alert_data["severity"] == "critical"
+        alert_id = alert_data["id"]
+
+        # Verify it appears in active alerts
+        list_res = await async_client.get("/api/alerts?keyword=Apple")
+        assert list_res.status_code == 200
+        assert any(a["id"] == alert_id for a in list_res.json())
+
+        # Resolve the alert
+        resolve_res = await async_client.post(f"/api/alerts/{alert_id}/resolve")
+        assert resolve_res.status_code == 200
+        assert resolve_res.json()["alert_id"] == alert_id
+
+        # Verify it is no longer in active alerts
+        list_after = await async_client.get("/api/alerts?keyword=Apple")
+        assert not any(a["id"] == alert_id for a in list_after.json())
+
 
 class TestInternalEndpoints:
     @pytest.mark.asyncio

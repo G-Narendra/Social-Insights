@@ -4,14 +4,21 @@ import React, { useState } from "react";
 import {
   AlertCircle,
   Calendar,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Download,
   ExternalLink,
+  FileSpreadsheet,
+  FileText,
   Filter,
+  Flame,
   MessageSquare,
   Search,
+  Sparkles,
   Tag,
   User,
+  X,
 } from "lucide-react";
 import { Mention, MentionsPage, Sentiment, Topic } from "@/lib/types";
 
@@ -60,6 +67,8 @@ const SOURCE_COLORS: Record<string, string> = {
 
 export function MentionsTab({ data, loading, filters, onFilterChange }: MentionsTabProps) {
   const [expandedMentionId, setExpandedMentionId] = useState<number | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
 
   const getSentimentBadge = (sentiment: Sentiment | null, score: number | null) => {
     const formattedScore = score !== null ? `(${score.toFixed(2)})` : "";
@@ -87,63 +96,286 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
     );
   };
 
+  // Export to CSV
+  const handleExportCSV = () => {
+    if (!data || data.items.length === 0) return;
+    setShowExportMenu(false);
+
+    const headers = [
+      "ID",
+      "Source",
+      "Author",
+      "Published Date",
+      "Sentiment",
+      "Sentiment Score",
+      "Topic",
+      "Topic Score",
+      "URL",
+      "Title",
+      "Text",
+    ];
+
+    const escapeCSV = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = data.items.map((m) => [
+      m.id,
+      m.source,
+      escapeCSV(m.author || "Anonymous"),
+      escapeCSV(m.published_at || ""),
+      m.sentiment || "neutral",
+      m.sentiment_score ?? "",
+      m.topic || "general_feedback",
+      m.topic_score ?? "",
+      escapeCSV(m.url || ""),
+      escapeCSV(m.title || ""),
+      escapeCSV(m.text_raw || ""),
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `social-mentions-${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setExportNotice(`Exported ${data.items.length} mentions to CSV`);
+    setTimeout(() => setExportNotice(null), 3500);
+  };
+
+  // Export to JSON
+  const handleExportJSON = () => {
+    if (!data || data.items.length === 0) return;
+    setShowExportMenu(false);
+
+    const blob = new Blob([JSON.stringify(data.items, null, 2)], {
+      type: "application/json;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `social-mentions-${dateStr}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setExportNotice(`Exported ${data.items.length} mentions to JSON`);
+    setTimeout(() => setExportNotice(null), 3500);
+  };
+
+  const hasActiveFilters = Boolean(
+    filters.search || filters.sentiment || filters.topic || filters.source
+  );
+
   return (
     <div className="space-y-4">
       {/* Control Filter Toolbar */}
-      <div className="glass-card rounded-2xl p-4 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search keywords, phrases or authors..."
-            value={filters.search}
-            onChange={(e) => onFilterChange({ search: e.target.value, page: 1 })}
-            className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
-          />
+      <div className="glass-card rounded-2xl p-4 flex flex-col gap-3">
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          {/* Search */}
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search keywords, phrases or authors..."
+              value={filters.search}
+              onChange={(e) => onFilterChange({ search: e.target.value, page: 1 })}
+              className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
+            />
+            {filters.search && (
+              <button
+                onClick={() => onFilterChange({ search: "", page: 1 })}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Filters Row */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Sentiment Filter */}
+            <select
+              value={filters.sentiment}
+              onChange={(e) => onFilterChange({ sentiment: e.target.value, page: 1 })}
+              className="bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="">All Sentiments</option>
+              <option value="positive">Positive</option>
+              <option value="neutral">Neutral</option>
+              <option value="negative">Negative</option>
+            </select>
+
+            {/* Topic Filter */}
+            <select
+              value={filters.topic}
+              onChange={(e) => onFilterChange({ topic: e.target.value, page: 1 })}
+              className="bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            >
+              {TOPICS.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Source Filter */}
+            <select
+              value={filters.source}
+              onChange={(e) => onFilterChange({ source: e.target.value, page: 1 })}
+              className="bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            >
+              {SOURCES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Reset Filters */}
+            {hasActiveFilters && (
+              <button
+                onClick={() =>
+                  onFilterChange({
+                    search: "",
+                    sentiment: "",
+                    topic: "",
+                    source: "",
+                    page: 1,
+                  })
+                }
+                className="px-2.5 py-2 text-xs text-slate-400 hover:text-white rounded-xl hover:bg-slate-800/80 transition-colors flex items-center gap-1"
+                title="Reset all filters"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span>Reset</span>
+              </button>
+            )}
+
+            {/* Export Dropdown Engine */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                disabled={!data || data.items.length === 0}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-slate-200 hover:text-white disabled:opacity-40 transition-all shadow-sm"
+              >
+                <Download className="h-3.5 w-3.5 text-indigo-400" />
+                <span>Export</span>
+                <ChevronDown className="h-3 w-3 text-slate-400" />
+              </button>
+
+              {showExportMenu && (
+                <div className="absolute right-0 mt-1.5 w-44 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl py-1 z-30">
+                  <button
+                    onClick={handleExportCSV}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 transition-colors text-left"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
+                    <span>Export to CSV (.csv)</span>
+                  </button>
+                  <button
+                    onClick={handleExportJSON}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 transition-colors text-left"
+                  >
+                    <FileText className="h-4 w-4 text-indigo-400" />
+                    <span>Export to JSON (.json)</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Sentiment Filter */}
-          <select
-            value={filters.sentiment}
-            onChange={(e) => onFilterChange({ sentiment: e.target.value, page: 1 })}
-            className="bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+        {/* Quick Triage Chips (PR & Support Fast-Filters) */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-800/80 text-xs">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+            Quick Triage:
+          </span>
+          <button
+            onClick={() => onFilterChange({ sentiment: "", topic: "", page: 1 })}
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+              !filters.sentiment && !filters.topic
+                ? "bg-slate-700 text-white font-semibold"
+                : "bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80"
+            }`}
           >
-            <option value="">All Sentiments</option>
-            <option value="positive">Positive</option>
-            <option value="neutral">Neutral</option>
-            <option value="negative">Negative</option>
-          </select>
-
-          {/* Topic Filter */}
-          <select
-            value={filters.topic}
-            onChange={(e) => onFilterChange({ topic: e.target.value, page: 1 })}
-            className="bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            All
+          </button>
+          <button
+            onClick={() => onFilterChange({ sentiment: "negative", page: 1 })}
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+              filters.sentiment === "negative"
+                ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 font-semibold"
+                : "bg-slate-900/60 text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/10"
+            }`}
           >
-            {TOPICS.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-
-          {/* Source Filter */}
-          <select
-            value={filters.source}
-            onChange={(e) => onFilterChange({ source: e.target.value, page: 1 })}
-            className="bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            <span>🚨 Urgent Negatives</span>
+          </button>
+          <button
+            onClick={() => onFilterChange({ sentiment: "positive", page: 1 })}
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+              filters.sentiment === "positive"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold"
+                : "bg-slate-900/60 text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10"
+            }`}
           >
-            {SOURCES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+            <span>⭐ High Praise</span>
+          </button>
+          <button
+            onClick={() => onFilterChange({ topic: "bug_issue", page: 1 })}
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+              filters.topic === "bug_issue"
+                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold"
+                : "bg-slate-900/60 text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10"
+            }`}
+          >
+            🛠️ Bugs & Issues
+          </button>
+          <button
+            onClick={() => onFilterChange({ topic: "customer_service", page: 1 })}
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+              filters.topic === "customer_service"
+                ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-semibold"
+                : "bg-slate-900/60 text-indigo-400/80 hover:text-indigo-300 hover:bg-indigo-500/10"
+            }`}
+          >
+            💬 Support Requests
+          </button>
+          <button
+            onClick={() => onFilterChange({ topic: "pricing_billing", page: 1 })}
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+              filters.topic === "pricing_billing"
+                ? "bg-violet-500/20 text-violet-300 border border-violet-500/40 font-semibold"
+                : "bg-slate-900/60 text-violet-400/80 hover:text-violet-300 hover:bg-violet-500/10"
+            }`}
+          >
+            💰 Pricing & Billing
+          </button>
         </div>
       </div>
+
+      {/* Export Feedback Banner */}
+      {exportNotice && (
+        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <Download className="h-4 w-4 text-emerald-400" />
+            <span>{exportNotice}</span>
+          </div>
+          <button onClick={() => setExportNotice(null)} className="text-emerald-400 hover:text-white">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Mentions Feed */}
       <div className="space-y-3">
