@@ -49,6 +49,14 @@ async def list_mentions(
         kw = await get_keyword_by_term(session, keyword)
         if kw:
             target_keyword_id = kw.id
+        else:
+            return PaginatedMentionsResponse(
+                items=[],
+                total=0,
+                page=page,
+                page_size=page_size,
+                total_pages=0,
+            )
 
     params = MentionFilterParams(
         keyword_id=target_keyword_id,

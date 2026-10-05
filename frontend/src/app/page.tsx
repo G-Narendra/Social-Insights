@@ -85,7 +85,7 @@ type ActiveTab = "overview" | "mentions" | "insights" | "compare";
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [keywords, setKeywords] = useState<Keyword[]>([]);
-  const [activeKeyword, setActiveKeyword] = useState<string>("Toyota");
+  const [activeKeyword, setActiveKeyword] = useState<string>("");
 
   // Tab Data States
   const [stats, setStats] = useState<OverviewStats | null>(null);
@@ -118,9 +118,11 @@ export default function DashboardPage() {
     try {
       const kws = await api.getKeywords();
       setKeywords(kws);
-      if (kws.length > 0 && !activeKeyword) {
-        setActiveKeyword(kws[0].term);
-      }
+      setActiveKeyword((current) => {
+        if (kws.length === 0) return "";
+        const exists = kws.some((k) => k.term.toLowerCase() === current.toLowerCase());
+        return exists ? current : kws[0].term;
+      });
     } catch (err) {
       console.error("Failed to load keywords", err);
     }
@@ -279,10 +281,14 @@ export default function DashboardPage() {
         setMentions(null);
         setSummary(null);
         if (nextKw) {
-          loadDashboardData(nextKw);
+          if (activeTab === "overview") loadDashboardData(nextKw);
+          else if (activeTab === "mentions") loadMentions(nextKw);
+          else if (activeTab === "insights") loadSummary(nextKw);
         } else {
           setStats(null);
           setTimeseries(null);
+          setMentions(null);
+          setSummary(null);
           setTrends([]);
           setAlerts([]);
         }
