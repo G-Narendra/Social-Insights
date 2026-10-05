@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  swcMinify: true,
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts"],
+  },
   async rewrites() {
     return [
       {

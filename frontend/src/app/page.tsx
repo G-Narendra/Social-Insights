@@ -11,13 +11,10 @@ import {
   RefreshCw,
   Sparkles,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Navbar } from "@/components/Navbar";
 import { OverviewTab } from "@/components/OverviewTab";
-import { MentionsTab } from "@/components/MentionsTab";
-import { InsightsTab } from "@/components/InsightsTab";
-import { CompareTab } from "@/components/CompareTab";
 import { TrendsAlertsBanner } from "@/components/TrendsAlertsBanner";
-import { CollectionModal } from "@/components/CollectionModal";
 import {
   AlertItem,
   Keyword,
@@ -28,6 +25,60 @@ import {
   TrendItem,
 } from "@/lib/types";
 import { api } from "@/lib/api";
+
+// Dynamically code-split non-critical tabs and modals for lightning-fast initial load
+const MentionsTab = dynamic(
+  () => import("@/components/MentionsTab").then((mod) => mod.MentionsTab),
+  {
+    loading: () => (
+      <div className="space-y-4 py-8 animate-pulse">
+        <div className="h-14 bg-slate-800/40 rounded-2xl border border-slate-700/50" />
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-28 bg-slate-800/40 rounded-2xl border border-slate-700/50" />
+          ))}
+        </div>
+      </div>
+    ),
+  }
+);
+
+const InsightsTab = dynamic(
+  () => import("@/components/InsightsTab").then((mod) => mod.InsightsTab),
+  {
+    loading: () => (
+      <div className="space-y-6 py-8 animate-pulse">
+        <div className="h-48 bg-slate-800/40 rounded-2xl border border-slate-700/50" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-40 bg-slate-800/40 rounded-2xl border border-slate-700/50" />
+          ))}
+        </div>
+      </div>
+    ),
+  }
+);
+
+const CompareTab = dynamic(
+  () => import("@/components/CompareTab").then((mod) => mod.CompareTab),
+  {
+    loading: () => (
+      <div className="space-y-6 py-8 animate-pulse">
+        <div className="h-16 bg-slate-800/40 rounded-2xl border border-slate-700/50" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-72 bg-slate-800/40 rounded-2xl border border-slate-700/50" />
+          ))}
+        </div>
+      </div>
+    ),
+  }
+);
+
+const CollectionModal = dynamic(
+  () => import("@/components/CollectionModal").then((mod) => mod.CollectionModal),
+  { ssr: false }
+);
 
 type ActiveTab = "overview" | "mentions" | "insights" | "compare";
 
@@ -148,18 +199,29 @@ export default function DashboardPage() {
     }
   };
 
-  // Trigger loads when active keyword changes
+  // Lazy tab data loading: only load data needed for active tab
+  useEffect(() => {
+    if (!activeKeyword) return;
+    if (activeTab === "overview") {
+      loadDashboardData(activeKeyword);
+    } else if (activeTab === "mentions") {
+      loadMentions(activeKeyword);
+    } else if (activeTab === "insights") {
+      loadSummary(activeKeyword);
+    }
+  }, [activeTab, activeKeyword]);
+
+  // When keyword changes, invalidate other tab caches so they re-fetch when clicked
   useEffect(() => {
     if (activeKeyword) {
-      loadDashboardData(activeKeyword);
-      loadMentions(activeKeyword);
-      loadSummary(activeKeyword);
+      if (activeTab !== "mentions") setMentions(null);
+      if (activeTab !== "insights") setSummary(null);
     }
   }, [activeKeyword]);
 
-  // Trigger mentions reload when filters change
+  // Trigger mentions reload when filters change (only if on mentions tab)
   useEffect(() => {
-    if (activeKeyword) {
+    if (activeKeyword && activeTab === "mentions") {
       loadMentions(activeKeyword);
     }
   }, [mentionsFilters]);
@@ -168,8 +230,8 @@ export default function DashboardPage() {
     setActiveKeyword(kw);
     loadKeywords();
     loadDashboardData(kw);
-    loadMentions(kw);
-    loadSummary(kw);
+    setMentions(null);
+    setSummary(null);
   };
 
   return (
