@@ -21,14 +21,13 @@ import { api } from "@/lib/api";
 
 interface CompareTabProps {
   initialKeyword: string;
+  availableKeywords?: string[];
 }
 
-export function CompareTab({ initialKeyword }: CompareTabProps) {
-  const [competitors, setCompetitors] = useState<string[]>([
-    initialKeyword || "Toyota",
-    "Honda",
-    "Tesla",
-  ]);
+export function CompareTab({ initialKeyword, availableKeywords = [] }: CompareTabProps) {
+  const [competitors, setCompetitors] = useState<string[]>(() => {
+    return initialKeyword ? [initialKeyword] : [];
+  });
   const [newBrandInput, setNewBrandInput] = useState("");
   const [data, setData] = useState<CompetitorComparisonResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,7 +35,7 @@ export function CompareTab({ initialKeyword }: CompareTabProps) {
 
   const fetchComparison = async (brandsToCompare: string[]) => {
     if (brandsToCompare.length < 2) {
-      setError("Please add at least 2 brands to compare.");
+      setData(null);
       return;
     }
     try {
@@ -51,13 +50,17 @@ export function CompareTab({ initialKeyword }: CompareTabProps) {
     }
   };
 
-  const handleAddBrand = () => {
-    const trimmed = newBrandInput.trim();
-    if (trimmed && !competitors.map((c) => c.toLowerCase()).includes(trimmed.toLowerCase())) {
-      const nextList = [...competitors, trimmed];
+  const handleAddBrand = (brandToAdd?: string) => {
+    const brand = (typeof brandToAdd === "string" ? brandToAdd : newBrandInput).trim();
+    if (brand && !competitors.map((c) => c.toLowerCase()).includes(brand.toLowerCase())) {
+      const nextList = [...competitors, brand];
       setCompetitors(nextList);
-      setNewBrandInput("");
-      fetchComparison(nextList);
+      if (typeof brandToAdd !== "string") {
+        setNewBrandInput("");
+      }
+      if (nextList.length >= 2) {
+        fetchComparison(nextList);
+      }
     }
   };
 
@@ -70,6 +73,13 @@ export function CompareTab({ initialKeyword }: CompareTabProps) {
       setData(null);
     }
   };
+
+  // Sync initialKeyword when changed externally if competitors was empty
+  React.useEffect(() => {
+    if (initialKeyword && competitors.length === 0) {
+      setCompetitors([initialKeyword]);
+    }
+  }, [initialKeyword]);
 
   React.useEffect(() => {
     if (competitors.length >= 2) {
@@ -183,7 +193,7 @@ export function CompareTab({ initialKeyword }: CompareTabProps) {
               className="bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none w-32"
             />
             <button
-              onClick={handleAddBrand}
+              onClick={() => handleAddBrand()}
               className="p-1 text-slate-400 hover:text-indigo-400 transition-colors"
               title="Add Brand"
             >
@@ -192,6 +202,31 @@ export function CompareTab({ initialKeyword }: CompareTabProps) {
           </div>
         </div>
 
+        {/* Quick Add Suggestions from other tracked brands */}
+        {availableKeywords.filter(
+          (k) => !competitors.map((c) => c.toLowerCase()).includes(k.toLowerCase())
+        ).length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-800 text-xs">
+            <span className="text-[11px] text-slate-400 font-medium mr-1">
+              Add from tracked brands:
+            </span>
+            {availableKeywords
+              .filter((k) => !competitors.map((c) => c.toLowerCase()).includes(k.toLowerCase()))
+              .slice(0, 5)
+              .map((kw) => (
+                <button
+                  key={kw}
+                  type="button"
+                  onClick={() => handleAddBrand(kw)}
+                  className="px-2.5 py-0.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 border border-slate-700 hover:border-indigo-500/50 text-slate-300 hover:text-white transition-all text-xs flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="h-3 w-3 text-indigo-400" />
+                  <span>{kw}</span>
+                </button>
+              ))}
+          </div>
+        )}
+
         {error && (
           <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
@@ -199,6 +234,19 @@ export function CompareTab({ initialKeyword }: CompareTabProps) {
           </div>
         )}
       </div>
+
+      {/* Onboarding State if fewer than 2 brands are selected */}
+      {competitors.length < 2 && (
+        <div className="glass-card rounded-2xl p-10 text-center border-dashed border-slate-800">
+          <GitCompare className="h-10 w-10 text-indigo-400 mx-auto mb-3" />
+          <h4 className="text-sm font-bold text-white">Compare Brands & Share of Voice</h4>
+          <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+            {competitors.length === 1
+              ? `Currently tracking "${competitors[0]}". Add a competitor brand name above (or click a tracked brand) to generate side-by-side Share of Voice, sentiment comparisons, and common customer complaints.`
+              : "Add at least 2 brands above to begin side-by-side benchmarking and competitive intelligence."}
+          </p>
+        </div>
+      )}
 
       {/* Brand Leadership Scorecard Banner */}
       {leader && (

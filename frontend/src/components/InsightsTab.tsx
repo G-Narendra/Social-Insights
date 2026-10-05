@@ -287,30 +287,47 @@ function InsightCard({
   accent: "rose" | "indigo" | "amber" | "emerald" | "violet";
 }) {
   const borderColors = {
-    rose: "hover:border-rose-500/40",
-    indigo: "hover:border-indigo-500/40",
-    amber: "hover:border-amber-500/40",
-    emerald: "hover:border-emerald-500/40",
-    violet: "hover:border-violet-500/40",
+    rose: "border-rose-500/20 hover:border-rose-500/50 bg-rose-500/5",
+    indigo: "border-indigo-500/20 hover:border-indigo-500/50 bg-indigo-500/5",
+    amber: "border-amber-500/20 hover:border-amber-500/50 bg-amber-500/5",
+    emerald: "border-emerald-500/20 hover:border-emerald-500/50 bg-emerald-500/5",
+    violet: "border-violet-500/20 hover:border-violet-500/50 bg-violet-500/5",
   };
 
   return (
     <div
-      className={`p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 transition-colors ${borderColors[accent]}`}
+      className={`p-4 rounded-xl border transition-all ${borderColors[accent]}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <h5 className="text-xs font-semibold text-white tracking-tight">{item.title}</h5>
-        {item.volume ? (
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
-            {item.volume} mentions
-          </span>
-        ) : null}
+        <h5 className="text-xs font-bold text-white tracking-tight">{item.title}</h5>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {item.sentiment && (
+            <span
+              className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${
+                item.sentiment === "positive"
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : item.sentiment === "negative"
+                  ? "bg-rose-500/20 text-rose-300"
+                  : "bg-slate-700/60 text-slate-300"
+              }`}
+            >
+              {item.sentiment}
+            </span>
+          )}
+          {item.volume ? (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+              {item.volume} {item.volume === 1 ? "mention" : "mentions"}
+            </span>
+          ) : null}
+        </div>
       </div>
-      <p className="text-xs text-slate-300 mt-1 leading-relaxed">{item.description}</p>
+      <p className="text-xs text-slate-300 mt-2 leading-relaxed">{item.description}</p>
       {item.evidence_mention_ids && item.evidence_mention_ids.length > 0 && (
-        <div className="mt-2 text-[10px] text-slate-500 flex items-center gap-1 font-mono">
-          <span>Cited mentions:</span>
-          <span>{item.evidence_mention_ids.slice(0, 4).join(", ")}</span>
+        <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 flex items-center gap-1 font-mono">
+          <span className="text-slate-500">Cited mention IDs:</span>
+          <span className="text-indigo-300">
+            {item.evidence_mention_ids.slice(0, 4).map((id) => `#${id}`).join(", ")}
+          </span>
         </div>
       )}
     </div>

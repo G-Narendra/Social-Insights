@@ -31,15 +31,24 @@ interface OverviewTabProps {
   loading: boolean;
   onRefresh: () => void;
   onSelectSearchTerm?: (term: string) => void;
+  onSelectFilter?: (filters: { sentiment?: string; topic?: string; search?: string }) => void;
 }
 
 const TOPIC_LABELS: Record<string, string> = {
-  pricing_billing: "Pricing & Billing",
+  product: "Product & Architecture",
+  features: "Features & Capabilities",
+  pricing: "Pricing & Plans",
+  quality: "Quality & Performance",
   customer_service: "Customer Support",
-  bug_issue: "Bugs & Outages",
-  feature_request: "Feature Requests",
-  performance: "Performance & Reliability",
+  complaints: "Complaints & Issues",
   competitors: "Competitor Comparison",
+  other: "General & Community",
+  // Fallbacks
+  pricing_billing: "Pricing & Plans",
+  customer_support: "Customer Support",
+  bug_issue: "Complaints & Issues",
+  feature_request: "Features & Capabilities",
+  performance: "Quality & Performance",
   onboarding_setup: "Onboarding & UX",
   general_feedback: "General Feedback",
 };
@@ -50,6 +59,7 @@ export function OverviewTab({
   loading,
   onRefresh,
   onSelectSearchTerm,
+  onSelectFilter,
 }: OverviewTabProps) {
   if (loading && !stats) {
     return (
@@ -138,22 +148,92 @@ export function OverviewTab({
     };
   }
 
-  // Curated Voice of Customer Buzzword Drivers
-  const positiveDrivers = [
-    { term: "reliability", label: "Reliability & Longevity", count: Math.max(12, Math.round(posPct * 0.4)) },
-    { term: "quality", label: "Build Quality", count: Math.max(9, Math.round(posPct * 0.35)) },
-    { term: "efficiency", label: "Hybrid & Efficiency", count: Math.max(7, Math.round(posPct * 0.25)) },
-    { term: "comfort", label: "Comfort & Design", count: Math.max(5, Math.round(posPct * 0.2)) },
-    { term: "value", label: "Resale Value", count: Math.max(4, Math.round(posPct * 0.18)) },
+  // Dynamic Voice of Customer (VoC) Drivers derived directly from active keyword data
+  const positiveDrivers: Array<{
+    label: string;
+    count: number;
+    filter: { topic?: string; sentiment?: string; search?: string };
+  }> = [];
+
+  // 1. High praise overall if positive mentions exist
+  if (safeSentiment.positive > 0) {
+    positiveDrivers.push({
+      label: "General Praise & Endorsements",
+      count: safeSentiment.positive,
+      filter: { sentiment: "positive" },
+    });
+  }
+
+  // 2. Add positive-leaning topics that actually exist in the data
+  const positiveTopicCandidates = [
+    { key: "features", label: "Features & Capabilities" },
+    { key: "quality", label: "Quality & Reliability" },
+    { key: "product", label: "Product & Architecture" },
+    { key: "customer_service", label: "Support Experience" },
+    { key: "pricing", label: "Value & Pricing" },
   ];
 
-  const frictionPoints = [
-    { term: "price", label: "Pricing & Markup", count: Math.max(8, Math.round(negPct * 0.45)) },
-    { term: "delay", label: "Delivery Delays", count: Math.max(6, Math.round(negPct * 0.35)) },
-    { term: "service", label: "Dealership Service", count: Math.max(5, Math.round(negPct * 0.28)) },
-    { term: "bug", label: "Software & Infotainment", count: Math.max(4, Math.round(negPct * 0.22)) },
-    { term: "recall", label: "Recall Concerns", count: Math.max(3, Math.round(negPct * 0.15)) },
+  for (const cand of positiveTopicCandidates) {
+    const found = top_topics.find((t) => t.topic === cand.key);
+    if (found && found.count > 0) {
+      positiveDrivers.push({
+        label: cand.label,
+        count: found.count,
+        filter: { topic: cand.key },
+      });
+    }
+  }
+
+  if (positiveDrivers.length === 0) {
+    positiveDrivers.push({
+      label: "Community Feedback",
+      count: safeSentiment.positive || total_mentions,
+      filter: { sentiment: "positive" },
+    });
+  }
+
+  const frictionPoints: Array<{
+    label: string;
+    count: number;
+    filter: { topic?: string; sentiment?: string; search?: string };
+  }> = [];
+
+  // 1. Critical negatives if negative mentions exist
+  if (safeSentiment.negative > 0) {
+    frictionPoints.push({
+      label: "Urgent Negative Feedback",
+      count: safeSentiment.negative,
+      filter: { sentiment: "negative" },
+    });
+  }
+
+  // 2. Friction topics that actually exist in data
+  const frictionTopicCandidates = [
+    { key: "complaints", label: "Complaints & Bug Reports" },
+    { key: "pricing", label: "Cost & Pricing Concerns" },
+    { key: "customer_service", label: "Customer Support Friction" },
+    { key: "competitors", label: "Competitor Comparison" },
+    { key: "quality", label: "Performance Deficits" },
   ];
+
+  for (const cand of frictionTopicCandidates) {
+    const found = top_topics.find((t) => t.topic === cand.key);
+    if (found && found.count > 0 && !frictionPoints.some((f) => f.label === cand.label)) {
+      frictionPoints.push({
+        label: cand.label,
+        count: found.count,
+        filter: { topic: cand.key },
+      });
+    }
+  }
+
+  if (frictionPoints.length === 0 && safeSentiment.negative > 0) {
+    frictionPoints.push({
+      label: "Critical Mentions",
+      count: safeSentiment.negative,
+      filter: { sentiment: "negative" },
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -415,9 +495,21 @@ export function OverviewTab({
               {top_topics.slice(0, 6).map((item, idx) => {
                 const label = TOPIC_LABELS[item.topic] || item.topic;
                 return (
-                  <div key={idx} className="space-y-1">
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      if (onSelectFilter) {
+                        onSelectFilter({ topic: item.topic });
+                      } else {
+                        onSelectSearchTerm?.(item.topic);
+                      }
+                    }}
+                    title={`Click to filter mentions by topic: ${label}`}
+                    className="w-full text-left space-y-1 group hover:bg-slate-800/60 p-1.5 rounded-xl transition-all cursor-pointer block"
+                  >
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-300 font-medium truncate max-w-[170px]">
+                      <span className="text-slate-300 group-hover:text-indigo-300 font-medium truncate max-w-[170px] transition-colors">
                         {label}
                       </span>
                       <span className="text-slate-400 font-mono text-[11px]">
@@ -426,11 +518,11 @@ export function OverviewTab({
                     </div>
                     <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-indigo-500 to-violet-500 h-1.5 rounded-full"
+                        className="bg-gradient-to-r from-indigo-500 to-violet-500 h-1.5 rounded-full group-hover:from-indigo-400 group-hover:to-violet-400 transition-all"
                         style={{ width: `${Math.min(100, item.percentage)}%` }}
                       />
                     </div>
-                  </div>
+                  </button>
                 );
               })}
               {top_topics.length === 0 && (
@@ -487,9 +579,15 @@ export function OverviewTab({
               {positiveDrivers.map((item, idx) => (
                 <button
                   key={idx}
-                  onClick={() => onSelectSearchTerm?.(item.term)}
-                  title={`Click to filter mentions by "${item.term}"`}
-                  className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-xs text-emerald-300 hover:text-white transition-all shadow-sm"
+                  onClick={() => {
+                    if (onSelectFilter) {
+                      onSelectFilter(item.filter);
+                    } else {
+                      onSelectSearchTerm?.(item.filter.topic || item.filter.search || item.label);
+                    }
+                  }}
+                  title={`Click to filter mentions for "${item.label}"`}
+                  className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-xs text-emerald-300 hover:text-white transition-all shadow-sm cursor-pointer"
                 >
                   <span className="font-medium">{item.label}</span>
                   <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] group-hover:bg-emerald-500/40">
@@ -509,9 +607,15 @@ export function OverviewTab({
               {frictionPoints.map((item, idx) => (
                 <button
                   key={idx}
-                  onClick={() => onSelectSearchTerm?.(item.term)}
-                  title={`Click to filter mentions by "${item.term}"`}
-                  className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs text-rose-300 hover:text-white transition-all shadow-sm"
+                  onClick={() => {
+                    if (onSelectFilter) {
+                      onSelectFilter(item.filter);
+                    } else {
+                      onSelectSearchTerm?.(item.filter.topic || item.filter.search || item.label);
+                    }
+                  }}
+                  title={`Click to filter mentions for "${item.label}"`}
+                  className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs text-rose-300 hover:text-white transition-all shadow-sm cursor-pointer"
                 >
                   <span className="font-medium">{item.label}</span>
                   <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono text-[10px] group-hover:bg-rose-500/40">

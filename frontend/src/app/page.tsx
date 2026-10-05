@@ -228,6 +228,17 @@ export default function DashboardPage() {
     setActiveTab("mentions");
   };
 
+  const handleSelectFilter = (filter: { sentiment?: string; topic?: string; search?: string }) => {
+    setMentionsFilters((prev) => ({
+      ...prev,
+      sentiment: filter.sentiment !== undefined ? filter.sentiment : "",
+      topic: filter.topic !== undefined ? filter.topic : "",
+      search: filter.search !== undefined ? filter.search : "",
+      page: 1,
+    }));
+    setActiveTab("mentions");
+  };
+
   // Lazy tab data loading: only load data needed for active tab
   useEffect(() => {
     if (!activeKeyword) return;
@@ -437,6 +448,7 @@ export default function DashboardPage() {
             loading={loadingStats}
             onRefresh={() => loadDashboardData(activeKeyword)}
             onSelectSearchTerm={handleSelectSearchTerm}
+            onSelectFilter={handleSelectFilter}
           />
         )}
 
@@ -459,7 +471,12 @@ export default function DashboardPage() {
           />
         )}
 
-        {activeTab === "compare" && <CompareTab initialKeyword={activeKeyword} />}
+        {activeTab === "compare" && (
+          <CompareTab
+            initialKeyword={activeKeyword}
+            availableKeywords={keywords.map((k) => k.term)}
+          />
+        )}
       </main>
 
       {/* Collection Ingestion Trigger Modal */}

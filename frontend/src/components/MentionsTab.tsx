@@ -38,15 +38,33 @@ interface MentionsTabProps {
 
 const TOPICS = [
   { value: "", label: "All Topics" },
-  { value: "pricing_billing", label: "Pricing & Billing" },
+  { value: "product", label: "Product & Architecture" },
+  { value: "features", label: "Features & Specs" },
+  { value: "pricing", label: "Pricing & Plans" },
+  { value: "quality", label: "Quality & Reliability" },
   { value: "customer_service", label: "Customer Support" },
-  { value: "bug_issue", label: "Bugs & Issues" },
-  { value: "feature_request", label: "Feature Requests" },
-  { value: "performance", label: "Performance & Reliability" },
-  { value: "competitors", label: "Competitors" },
-  { value: "onboarding_setup", label: "Onboarding & Setup" },
-  { value: "general_feedback", label: "General Feedback" },
+  { value: "complaints", label: "Complaints & Bugs" },
+  { value: "competitors", label: "Competitor Comparison" },
+  { value: "other", label: "General & Community" },
 ];
+
+const TOPIC_LABELS: Record<string, string> = {
+  product: "Product & Architecture",
+  features: "Features & Specs",
+  pricing: "Pricing & Plans",
+  quality: "Quality & Reliability",
+  customer_service: "Customer Support",
+  complaints: "Complaints & Bugs",
+  competitors: "Competitor Comparison",
+  other: "General & Community",
+  // Fallbacks
+  pricing_billing: "Pricing & Plans",
+  bug_issue: "Complaints & Bugs",
+  feature_request: "Features & Specs",
+  performance: "Quality & Reliability",
+  onboarding_setup: "Onboarding & UX",
+  general_feedback: "General Feedback",
+};
 
 const SOURCES = [
   { value: "", label: "All Sources" },
@@ -318,9 +336,15 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
             All
           </button>
           <button
-            onClick={() => onFilterChange({ sentiment: "negative", page: 1 })}
+            onClick={() => {
+              if (filters.sentiment === "negative" && !filters.topic) {
+                onFilterChange({ sentiment: "", page: 1 });
+              } else {
+                onFilterChange({ sentiment: "negative", topic: "", page: 1 });
+              }
+            }}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-              filters.sentiment === "negative"
+              filters.sentiment === "negative" && !filters.topic
                 ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 font-semibold"
                 : "bg-slate-900/60 text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/10"
             }`}
@@ -328,9 +352,15 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
             <span>🚨 Urgent Negatives</span>
           </button>
           <button
-            onClick={() => onFilterChange({ sentiment: "positive", page: 1 })}
+            onClick={() => {
+              if (filters.sentiment === "positive" && !filters.topic) {
+                onFilterChange({ sentiment: "", page: 1 });
+              } else {
+                onFilterChange({ sentiment: "positive", topic: "", page: 1 });
+              }
+            }}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-              filters.sentiment === "positive"
+              filters.sentiment === "positive" && !filters.topic
                 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold"
                 : "bg-slate-900/60 text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10"
             }`}
@@ -338,19 +368,31 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
             <span>⭐ High Praise</span>
           </button>
           <button
-            onClick={() => onFilterChange({ topic: "bug_issue", page: 1 })}
+            onClick={() => {
+              if (filters.topic === "complaints" && !filters.sentiment) {
+                onFilterChange({ topic: "", page: 1 });
+              } else {
+                onFilterChange({ topic: "complaints", sentiment: "", page: 1 });
+              }
+            }}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-              filters.topic === "bug_issue"
+              filters.topic === "complaints" && !filters.sentiment
                 ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold"
                 : "bg-slate-900/60 text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10"
             }`}
           >
-            🛠️ Bugs & Issues
+            🛠️ Bugs & Complaints
           </button>
           <button
-            onClick={() => onFilterChange({ topic: "customer_service", page: 1 })}
+            onClick={() => {
+              if (filters.topic === "customer_service" && !filters.sentiment) {
+                onFilterChange({ topic: "", page: 1 });
+              } else {
+                onFilterChange({ topic: "customer_service", sentiment: "", page: 1 });
+              }
+            }}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-              filters.topic === "customer_service"
+              filters.topic === "customer_service" && !filters.sentiment
                 ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-semibold"
                 : "bg-slate-900/60 text-indigo-400/80 hover:text-indigo-300 hover:bg-indigo-500/10"
             }`}
@@ -358,16 +400,109 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
             💬 Support Requests
           </button>
           <button
-            onClick={() => onFilterChange({ topic: "pricing_billing", page: 1 })}
+            onClick={() => {
+              if (filters.topic === "pricing" && !filters.sentiment) {
+                onFilterChange({ topic: "", page: 1 });
+              } else {
+                onFilterChange({ topic: "pricing", sentiment: "", page: 1 });
+              }
+            }}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-              filters.topic === "pricing_billing"
+              filters.topic === "pricing" && !filters.sentiment
                 ? "bg-violet-500/20 text-violet-300 border border-violet-500/40 font-semibold"
                 : "bg-slate-900/60 text-violet-400/80 hover:text-violet-300 hover:bg-violet-500/10"
             }`}
           >
-            💰 Pricing & Billing
+            💰 Pricing & Plans
+          </button>
+          <button
+            onClick={() => {
+              if (filters.topic === "features" && !filters.sentiment) {
+                onFilterChange({ topic: "", page: 1 });
+              } else {
+                onFilterChange({ topic: "features", sentiment: "", page: 1 });
+              }
+            }}
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+              filters.topic === "features" && !filters.sentiment
+                ? "bg-sky-500/20 text-sky-300 border border-sky-500/40 font-semibold"
+                : "bg-slate-900/60 text-sky-400/80 hover:text-sky-300 hover:bg-sky-500/10"
+            }`}
+          >
+            ✨ Features & Specs
           </button>
         </div>
+
+        {/* Active Filters Summary Bar */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-800/80 text-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+              Active Filters:
+            </span>
+            {filters.search && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[11px]">
+                Search: "{filters.search}"
+                <button
+                  onClick={() => onFilterChange({ search: "", page: 1 })}
+                  className="hover:text-white ml-0.5"
+                  title="Remove search query"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {filters.sentiment && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 text-[11px] capitalize">
+                Sentiment: {filters.sentiment}
+                <button
+                  onClick={() => onFilterChange({ sentiment: "", page: 1 })}
+                  className="hover:text-white ml-0.5"
+                  title="Remove sentiment filter"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {filters.topic && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 text-[11px]">
+                Topic: {TOPIC_LABELS[filters.topic] || filters.topic}
+                <button
+                  onClick={() => onFilterChange({ topic: "", page: 1 })}
+                  className="hover:text-white ml-0.5"
+                  title="Remove topic filter"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {filters.source && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 text-[11px]">
+                Source: {filters.source}
+                <button
+                  onClick={() => onFilterChange({ source: "", page: 1 })}
+                  className="hover:text-white ml-0.5"
+                  title="Remove source filter"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            <button
+              onClick={() =>
+                onFilterChange({
+                  search: "",
+                  sentiment: "",
+                  topic: "",
+                  source: "",
+                  page: 1,
+                })
+              }
+              className="text-[11px] font-semibold text-rose-400 hover:text-rose-300 hover:underline ml-2"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Export Feedback Banner */}
@@ -425,7 +560,7 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
                     {m.topic && (
                       <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium">
                         <Tag className="h-3 w-3" />
-                        {m.topic.replace(/_/g, " ")}
+                        {TOPIC_LABELS[m.topic] || m.topic.replace(/_/g, " ")}
                       </span>
                     )}
 

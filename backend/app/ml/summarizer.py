@@ -32,6 +32,90 @@ def compute_data_fingerprint(keyword: str, total: int, pos: int, neg: int, last_
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
+def _clean_snippet(title: str | None, text: str | None, max_len: int = 240) -> str:
+    """Clean HTML tags, raw URLs, and truncate gracefully at complete thoughts."""
+    raw = (title + ". " if title and title != text else "") + (text or "")
+    # Remove HTML tags
+    cleaned = re.sub(r"<[^>]+>", " ", raw)
+    # Remove raw URLs
+    cleaned = re.sub(r"https?://\S+", "", cleaned)
+    # Normalize whitespace
+    cleaned = " ".join(cleaned.split())
+    if len(cleaned) <= max_len:
+        return cleaned
+    trimmed = cleaned[:max_len]
+    last_stop = max(trimmed.rfind(". "), trimmed.rfind("! "), trimmed.rfind("? "))
+    if last_stop > max_len // 2:
+        return trimmed[: last_stop + 1]
+    last_space = trimmed.rfind(" ")
+    if last_space > 0:
+        return trimmed[:last_space] + "..."
+    return trimmed + "..."
+
+
+async def _fetch_representative_samples(
+    session: AsyncSession, keyword_id: int
+) -> list[tuple[int, str, str | None, str | None, str | None]]:
+    """Fetch representative mentions across positive, negative, key topics, and recent mentions."""
+    samples_map: dict[int, tuple[int, str, str | None, str | None, str | None]] = {}
+
+    # 1. Fetch positive samples
+    q_pos = (
+        select(Mention.id, Mention.title, Mention.text_clean, Mention.sentiment, Mention.topic)
+        .where(
+            Mention.keyword_id == keyword_id,
+            Mention.status == "done",
+            Mention.sentiment == "positive",
+        )
+        .order_by(Mention.id.desc())
+        .limit(5)
+    )
+    for row in (await session.execute(q_pos)).all():
+        samples_map[row[0]] = (row[0], row[1] or "", row[2] or "", row[3], row[4])
+
+    # 2. Fetch negative samples
+    q_neg = (
+        select(Mention.id, Mention.title, Mention.text_clean, Mention.sentiment, Mention.topic)
+        .where(
+            Mention.keyword_id == keyword_id,
+            Mention.status == "done",
+            Mention.sentiment == "negative",
+        )
+        .order_by(Mention.id.desc())
+        .limit(5)
+    )
+    for row in (await session.execute(q_neg)).all():
+        samples_map[row[0]] = (row[0], row[1] or "", row[2] or "", row[3], row[4])
+
+    # 3. Fetch feature and quality topic samples
+    q_topics = (
+        select(Mention.id, Mention.title, Mention.text_clean, Mention.sentiment, Mention.topic)
+        .where(
+            Mention.keyword_id == keyword_id,
+            Mention.status == "done",
+            Mention.topic.in_(["features", "quality", "product", "complaints"]),
+        )
+        .order_by(Mention.id.desc())
+        .limit(6)
+    )
+    for row in (await session.execute(q_topics)).all():
+        samples_map[row[0]] = (row[0], row[1] or "", row[2] or "", row[3], row[4])
+
+    # 4. Fill with recent mentions up to 16
+    if len(samples_map) < 16:
+        q_recent = (
+            select(Mention.id, Mention.title, Mention.text_clean, Mention.sentiment, Mention.topic)
+            .where(Mention.keyword_id == keyword_id, Mention.status == "done")
+            .order_by(Mention.published_at.desc().nulls_last(), Mention.id.desc())
+            .limit(16)
+        )
+        for row in (await session.execute(q_recent)).all():
+            if row[0] not in samples_map:
+                samples_map[row[0]] = (row[0], row[1] or "", row[2] or "", row[3], row[4])
+
+    return list(samples_map.values())
+
+
 async def get_or_generate_summary(
     session: AsyncSession,
     keyword_id: int,
@@ -107,15 +191,8 @@ async def get_or_generate_summary(
                 insights=insights_obj,
             )
 
-    # Gather representative samples (up to 3 positive, 3 negative, 3 neutral)
-    sample_query = (
-        select(Mention.id, Mention.text_clean, Mention.sentiment, Mention.topic)
-        .where(Mention.keyword_id == keyword_id)
-        .where(Mention.status == "done")
-        .order_by(Mention.published_at.desc().nulls_last())
-        .limit(12)
-    )
-    samples = (await session.execute(sample_query)).all()
+    # Gather representative samples across sentiments & key topics
+    samples = await _fetch_representative_samples(session, keyword_id)
 
     # Attempt Tier 2 LLM generation if available
     client = llm_client or LLMClient()
@@ -140,7 +217,7 @@ async def get_or_generate_summary(
     # Tier 3: Deterministic template fallback
     if not content:
         content = _generate_template_summary(keyword.term, stats, samples)
-        structured_insights = _generate_template_insights(samples, stats)
+        structured_insights = _generate_template_insights(samples, stats, keyword=keyword.term)
         method = "template"
         model_name = "template-engine"
 
@@ -190,8 +267,15 @@ AGGREGATE METRICS:
 
 REPRESENTATIVE SAMPLES:
 """
-    for mid, text, sent, top in samples:
-        safe_text = (text or "")[:180].replace("<", "&lt;").replace(">", "&gt;")
+    for item in samples:
+        if len(item) == 5:
+            mid, title, text, sent, top = item
+        else:
+            mid, text, sent, top = item
+            title = ""
+        safe_text = (
+            _clean_snippet(title, text, max_len=180).replace("<", "&lt;").replace(">", "&gt;")
+        )
         user_context += (
             f'<mention id="{mid}" sentiment="{sent}" topic="{top}">{safe_text}</mention>\n'
         )
@@ -223,7 +307,7 @@ REPRESENTATIVE SAMPLES:
         try:
             insights_obj = StructuredInsights.model_validate(insights_json)
         except Exception:
-            insights_obj = _generate_template_insights(samples, stats)
+            insights_obj = _generate_template_insights(samples, stats, keyword=keyword)
 
     return summary_text.strip(), insights_obj
 
@@ -278,72 +362,140 @@ def _generate_template_summary(
 def _generate_template_insights(
     samples: list[Any],
     stats: OverviewStatsResponse,
+    keyword: str = "",
 ) -> StructuredInsights:
     """Extract structured insights from samples and topic distributions deterministically."""
     feature_patterns = re.compile(
-        r"\b(wish|should add|would love|missing|needs|hope)\b", re.IGNORECASE
+        r"\b(wish|should add|would love|missing|needs|hope|feature|support|integrate|api|release|upgrade)\b",
+        re.IGNORECASE,
     )
 
-    emerging_complaints = []
-    requested_features = []
-    pain_points = []
-    positive_themes = []
-    opportunities = []
+    emerging_complaints: list[InsightItem] = []
+    requested_features: list[InsightItem] = []
+    pain_points: list[InsightItem] = []
+    positive_themes: list[InsightItem] = []
+    opportunities: list[InsightItem] = []
 
-    for mid, text, sent, top in samples:
-        t = text or ""
-        # Requested features
-        if feature_patterns.search(t):
-            requested_features.append(
-                InsightItem(
-                    title="User Requested Enhancement",
-                    description=t[:120] + "...",
-                    evidence_mention_ids=[mid],
-                    volume=1,
-                    sentiment=sent,
+    for item in samples:
+        if len(item) == 5:
+            mid, title, text, sent, top = item
+        else:
+            mid, text, sent, top = item
+            title = ""
+
+        snippet = _clean_snippet(title, text, max_len=240)
+        if not snippet or len(snippet) < 15:
+            continue
+
+        topic_label = (top or "Product").replace("_", " ").title()
+
+        # Requested features: matches pattern or classified under features
+        if top == "features" or feature_patterns.search(snippet):
+            if len(requested_features) < 3:
+                requested_features.append(
+                    InsightItem(
+                        title=f"Feature Focus: {topic_label}",
+                        description=snippet,
+                        evidence_mention_ids=[mid],
+                        volume=1,
+                        sentiment=sent or "neutral",
+                    )
                 )
-            )
 
         # Pain points and emerging complaints
-        if sent == "negative":
-            item = InsightItem(
-                title=f"Critical Issue in {top.title() if top else 'Quality'}",
-                description=t[:120] + "...",
+        if sent == "negative" or top in ["complaints", "customer_service"]:
+            p_item = InsightItem(
+                title=f"User Friction in {topic_label}",
+                description=snippet,
                 evidence_mention_ids=[mid],
                 volume=1,
                 sentiment="negative",
             )
-            pain_points.append(item)
-            if top in ["complaints", "quality"]:
-                emerging_complaints.append(item)
+            if len(pain_points) < 3:
+                pain_points.append(p_item)
+            if (sent == "negative" or top == "complaints") and len(emerging_complaints) < 3:
+                emerging_complaints.append(p_item)
 
         # Positive themes
-        if sent == "positive":
-            positive_themes.append(
-                InsightItem(
-                    title=f"Strength in {top.title() if top else 'Product'}",
-                    description=t[:120] + "...",
-                    evidence_mention_ids=[mid],
-                    volume=1,
-                    sentiment="positive",
+        if sent == "positive" or top in ["quality", "product"]:
+            if len(positive_themes) < 3:
+                positive_themes.append(
+                    InsightItem(
+                        title=f"Positive Perception in {topic_label}",
+                        description=snippet,
+                        evidence_mention_ids=[mid],
+                        volume=1,
+                        sentiment="positive",
+                    )
                 )
-            )
 
-    # Opportunities derived from pain points
-    if pain_points:
+    # Fallbacks if sample count was small
+    if not requested_features and stats.top_topics:
+        top_topic = stats.top_topics[0].topic.replace("_", " ").title()
+        requested_features.append(
+            InsightItem(
+                title=f"Core Capability Interest: {top_topic}",
+                description=f"Public attention centers heavily on {top_topic.lower()} with {stats.top_topics[0].percentage}% of volume. Users expect active updates and reliability here.",
+                evidence_mention_ids=[],
+                volume=stats.top_topics[0].count,
+            )
+        )
+
+    if not positive_themes and stats.sentiment.positive > 0:
+        positive_themes.append(
+            InsightItem(
+                title="Brand Advocacy & Reception",
+                description=f"{stats.sentiment.positive} mentions reflect favorable community sentiment ({stats.sentiment.positive_pct}% positive share).",
+                evidence_mention_ids=[],
+                volume=stats.sentiment.positive,
+                sentiment="positive",
+            )
+        )
+
+    # Strategic Opportunities computed from aggregate metrics
+    kw_name = keyword or stats.keyword
+    if stats.top_topics:
+        lead_t = stats.top_topics[0]
+        t_name = lead_t.topic.replace("_", " ").title()
         opportunities.append(
             InsightItem(
-                title="Service Quality Differentiation",
-                description=f"Addressing top complaints in {stats.top_topics[0].topic if stats.top_topics else 'pricing'} offers immediate brand perception uplift.",
-                evidence_mention_ids=[
-                    p.evidence_mention_ids[0] for p in pain_points[:2] if p.evidence_mention_ids
-                ],
-                volume=len(pain_points),
+                title=f"Capitalize on {t_name} Discussion Volume",
+                description=f"{t_name} is the primary discussion driver ({lead_t.percentage}% of all mentions for {kw_name}). Publishing guides, customer stories, and feature deep-dives will maximize reach.",
+                evidence_mention_ids=[],
+                volume=lead_t.count,
+            )
+        )
+
+    if stats.sentiment.neutral_pct >= 50.0:
+        opportunities.append(
+            InsightItem(
+                title="Convert Neutral Mindshare into Advocates",
+                description=f"{stats.sentiment.neutral_pct}% of mentions are neutral or informative. Targeted community engagement and transparent milestone updates can turn passive observers into active brand champions.",
+                evidence_mention_ids=[],
+                volume=stats.sentiment.neutral,
+            )
+        )
+    elif stats.sentiment.negative_pct > 15.0:
+        opportunities.append(
+            InsightItem(
+                title="Proactive Issue Resolution & Mitigation",
+                description=f"Negative sentiment accounts for {stats.sentiment.negative_pct}% of discussions. Addressing recurring friction points will significantly elevate the Brand Reputation Health score.",
+                evidence_mention_ids=[],
+                volume=stats.sentiment.negative,
+            )
+        )
+    else:
+        opportunities.append(
+            InsightItem(
+                title="Amplify Positive User Endorsements",
+                description=f"Strong positive sentiment ({stats.sentiment.positive_pct}%) provides valuable social proof. Repurpose community praise into marketing collateral and social campaigns.",
+                evidence_mention_ids=[],
+                volume=stats.sentiment.positive,
             )
         )
 
     return StructuredInsights(
-        emerging_complaints=pain_points[:3],
+        emerging_complaints=emerging_complaints[:3],
         requested_features=requested_features[:3],
         pain_points=pain_points[:3],
         positive_themes=positive_themes[:3],

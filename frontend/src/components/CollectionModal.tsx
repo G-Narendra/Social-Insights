@@ -36,7 +36,7 @@ export function CollectionModal({
   defaultKeyword,
   onSuccess,
 }: CollectionModalProps) {
-  const [keyword, setKeyword] = useState(defaultKeyword || "Toyota");
+  const [keyword, setKeyword] = useState(defaultKeyword || "");
   const [aliases, setAliases] = useState("");
   const [contextHint, setContextHint] = useState("");
   const [limit, setLimit] = useState(25);
@@ -53,6 +53,15 @@ export function CollectionModal({
   const [runStatus, setRunStatus] = useState<string | null>(null);
   const [progressMsg, setProgressMsg] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setKeyword(defaultKeyword || "");
+      setError(null);
+      setRunStatus(null);
+      setProgressMsg("");
+    }
+  }, [isOpen, defaultKeyword]);
 
   if (!isOpen) return null;
 
@@ -183,7 +192,7 @@ export function CollectionModal({
                 required
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                placeholder="e.g. Toyota, Stripe, Figma"
+                placeholder="e.g. ChatGPT, Stripe, OpenAI, Tesla"
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
             </div>
