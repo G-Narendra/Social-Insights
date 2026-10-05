@@ -134,6 +134,48 @@ def is_keyword_only_in_url(raw_text: str, keyword_pattern: re.Pattern) -> bool:
     return not bool(keyword_pattern.search(no_urls))
 
 
+def _stem_word(word: str) -> str:
+    """Lightweight suffix stripping for lexical matching (e.g. planting -> plant, trees -> tree)."""
+    w = word.lower().strip()
+    for suffix in ("ing", "ed", "es", "s"):
+        if len(w) > len(suffix) + 3 and w.endswith(suffix):
+            return w[:-len(suffix)]
+    return w
+
+
+def _matches_multi_word_overlap(combined_text: str, candidate: str, primary_kw: str) -> bool:
+    """
+    Check if a candidate term has high-confidence stemmed token overlap with text.
+    Enforces geographic/brand entity anchors when specified.
+    """
+    text_lower = combined_text.lower()
+    text_norm = re.sub(r"\b(\d+)m\b", r"\1 million \1m", text_lower)
+    cand_norm = re.sub(r"\b(\d+)m\b", r"\1 million \1m", candidate.lower())
+    prim_norm = re.sub(r"\b(\d+)m\b", r"\1 million \1m", primary_kw.lower())
+
+    # If primary keyword specifies an explicit geographic entity, ensure text aligns
+    geo_anchors = ("uae", "emirates", "abu dhabi", "dubai", "sharjah")
+    if any(loc in prim_norm for loc in geo_anchors):
+        if not any(loc in text_norm for loc in geo_anchors):
+            return False
+
+    tokens = [
+        w
+        for w in re.findall(r"\b[a-zA-Z0-9]{3,}\b", cand_norm)
+        if w not in {"the", "and", "for", "with", "from", "that", "this", "about"}
+    ]
+    if len(tokens) < 2:
+        return False
+
+    stems = [_stem_word(t) for t in tokens]
+    text_tokens = [_stem_word(t) for t in re.findall(r"\b[a-zA-Z0-9]{3,}\b", text_norm)]
+
+    matched = sum(1 for s in stems if s in text_tokens)
+    ratio = matched / len(stems)
+    threshold = 1.0 if len(stems) == 2 else 0.55
+    return ratio >= threshold
+
+
 def check_relevance(
     text: str,
     title: str | None,
@@ -144,7 +186,7 @@ def check_relevance(
     """
     Evaluate if a mention is relevant to the target keyword:
     1. Must match keyword or alias on word boundaries (flexible whitespace/hyphen)
-    2. Multi-word phrases (>= 3 words) allow high-confidence token overlap (>= 65%)
+    2. Multi-word phrases allow stemmed token overlap with entity preservation
     3. Must not be present exclusively in a URL
     4. If keyword is ambiguous, verify presence of context hint or domain association terms
     Returns (is_relevant, drop_reason).
@@ -156,20 +198,10 @@ def check_relevance(
     pattern = build_keyword_regex(keyword, aliases)
     match = pattern.search(combined_text)
 
-    # For multi-word queries with 3+ significant tokens, allow high token overlap
+    # For multi-word queries or aliases, check high-confidence stemmed token overlap
     if not match:
-        tokens = [
-            w.lower()
-            for w in re.findall(r"\b[a-zA-Z0-9]{3,}\b", keyword)
-            if w.lower() not in {"the", "and", "for", "with", "from", "that", "this", "about"}
-        ]
-        if len(tokens) >= 3:
-            text_lower = combined_text.lower()
-            matched_tokens = sum(
-                1 for tok in tokens if re.search(r"\b" + re.escape(tok) + r"\b", text_lower)
-            )
-            if (matched_tokens / len(tokens)) >= 0.65:
-                match = True
+        candidates = [keyword] + (aliases or [])
+        match = any(_matches_multi_word_overlap(combined_text, cand, keyword) for cand in candidates)
 
     if not match:
         return False, "irrelevant_keyword"

@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     # --- NVIDIA NIM LLM (optional) ---
     nvidia_api_key: str | None = None
     nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
-    nvidia_model: str = "meta/llama-3.1-8b-instruct"
+    nvidia_model: str = "meta/llama-3.2-11b-vision-instruct"
 
     # --- AI/ML tuning ---
     llm_max_items_per_run: int = 20

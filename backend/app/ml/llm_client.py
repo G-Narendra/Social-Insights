@@ -17,7 +17,7 @@ from app.config import Settings, get_settings
 logger = logging.getLogger(__name__)
 
 DEFAULT_NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
-DEFAULT_MODEL = "meta/llama-3.1-8b-instruct"
+DEFAULT_MODEL = "meta/llama-3.2-11b-vision-instruct"
 
 
 class LLMClient:
