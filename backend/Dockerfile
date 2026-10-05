@@ -44,8 +44,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Create non-root user and persistent directories
 RUN groupadd -g 1001 appuser && \
     useradd -u 1001 -g appuser -s /bin/bash -m appuser && \
-    mkdir -p /app/data /app/.cache/huggingface /app/.cache/sbert && \
-    chown -R appuser:appuser /app
+    mkdir -p /app/data /app/.cache/huggingface /app/.cache/sbert /tmp/huggingface /tmp/sbert && \
+    chown -R appuser:appuser /app /tmp/huggingface /tmp/sbert
 
 # Copy application source code and migrations configuration
 COPY --chown=appuser:appuser app /app/app
@@ -54,8 +54,9 @@ COPY --chown=appuser:appuser alembic.ini /app/alembic.ini
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    HF_HOME=/app/.cache/huggingface \
-    SENTENCE_TRANSFORMERS_HOME=/app/.cache/sbert \
+    HF_HOME=/tmp/huggingface \
+    TRANSFORMERS_CACHE=/tmp/huggingface \
+    SENTENCE_TRANSFORMERS_HOME=/tmp/sbert \
     DATABASE_URL=sqlite+aiosqlite:////app/data/social_insights.db \
     APP_ENV=production \
     PORT=8000

@@ -16,11 +16,25 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipe
 
 logger = logging.getLogger(__name__)
 
-# Enforce project-local model caches
-PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
-CACHE_DIR = PROJECT_ROOT / ".cache"
-HF_CACHE = CACHE_DIR / "huggingface"
-SBERT_CACHE = CACHE_DIR / "sbert"
+def _resolve_writable_cache_dir(env_var: str, default_name: str) -> Path:
+    val = os.environ.get(env_var)
+    if val and val.strip() and not val.strip().startswith("/.cache"):
+        candidate = Path(val).resolve()
+    else:
+        # Fallback to /tmp in containers or project root if writable
+        candidate = Path("/tmp") / default_name
+
+    try:
+        candidate.mkdir(parents=True, exist_ok=True)
+        return candidate
+    except (PermissionError, OSError):
+        fallback = Path("/tmp") / default_name
+        fallback.mkdir(parents=True, exist_ok=True)
+        return fallback
+
+
+HF_CACHE = _resolve_writable_cache_dir("HF_HOME", "huggingface")
+SBERT_CACHE = _resolve_writable_cache_dir("SENTENCE_TRANSFORMERS_HOME", "sbert")
 
 os.environ["HF_HOME"] = str(HF_CACHE)
 os.environ["TRANSFORMERS_CACHE"] = str(HF_CACHE)

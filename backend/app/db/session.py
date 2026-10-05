@@ -66,9 +66,11 @@ def normalize_database_connection(raw_url: str) -> tuple[str, dict[str, Any]]:
     elif not is_local:
         connect_args["ssl"] = "require"
 
-    new_query = urllib.parse.urlencode(query_params, doseq=True)
+    # Strip ALL query parameters from the PostgreSQL URL.
+    # asyncpg connects via path/netloc credentials; any remaining libpq query parameters
+    # (such as 'channel_binding', 'sslmode', 'options', etc.) cause TypeError in asyncpg.connect().
     clean_url = urllib.parse.urlunsplit(
-        (parsed.scheme, parsed.netloc, parsed.path, new_query, parsed.fragment)
+        (parsed.scheme, parsed.netloc, parsed.path, "", parsed.fragment)
     )
     return clean_url, connect_args
 

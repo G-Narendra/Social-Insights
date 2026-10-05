@@ -66,6 +66,15 @@ class TestSettings:
         assert clean_url == "postgresql+asyncpg://user:pass@ep-test.neon.tech/social_insights"
         assert connect_args == {"ssl": "require"}
 
+        # Neon URL with channel_binding and sslmode
+        neon_url, neon_args = normalize_database_connection(
+            "postgresql://user:pass@ep-test.neon.tech/social_insights?sslmode=require&channel_binding=require"
+        )
+        assert "channel_binding" not in neon_url
+        assert "sslmode" not in neon_url
+        assert neon_url == "postgresql+asyncpg://user:pass@ep-test.neon.tech/social_insights"
+        assert neon_args == {"ssl": "require"}
+
         # SQLite check
         sqlite_url, sqlite_args = normalize_database_connection("sqlite+aiosqlite:///./test.db")
         assert sqlite_url == "sqlite+aiosqlite:///./test.db"

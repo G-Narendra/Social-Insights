@@ -15,11 +15,17 @@ from pathlib import Path
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Keep model downloads project-local (Part 2.1)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-os.environ.setdefault("HF_HOME", str(PROJECT_ROOT / ".cache" / "huggingface"))
-os.environ.setdefault("TRANSFORMERS_CACHE", str(PROJECT_ROOT / ".cache" / "huggingface"))
-os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", str(PROJECT_ROOT / ".cache" / "sbert"))
+# Safe model cache initialization
+hf_cache = os.environ.get("HF_HOME")
+if not hf_cache or hf_cache.startswith("/.cache"):
+    hf_cache = "/tmp/huggingface"
+sbert_cache = os.environ.get("SENTENCE_TRANSFORMERS_HOME")
+if not sbert_cache or sbert_cache.startswith("/.cache"):
+    sbert_cache = "/tmp/sbert"
+
+os.environ.setdefault("HF_HOME", hf_cache)
+os.environ.setdefault("TRANSFORMERS_CACHE", hf_cache)
+os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", sbert_cache)
 
 
 class Settings(BaseSettings):
