@@ -291,6 +291,10 @@ Scaled ingestion to 8 global data connectors (added Wikipedia, LinkedIn Pulse / 
       Evidence: Verified in `frontend/src/app/page.tsx` and `frontend/src/components/InsightsTab.tsx`.
 - [x] T11.6 Technical Defense Dossier published (`docs/INTERNSHIP_PORTFOLIO.md`).
       Evidence: 130-line architectural defense detailing systems thinking, cost engineering, trade-offs, and interview strategies.
+- [x] T11.7 Brand Removal & Cascading Cleanup (`DELETE /api/keywords/{id}`).
+      Evidence: Added backend `delete_keyword` cascading deletion across `mentions`, `summaries`, `alerts`, and `collection_runs`. Added interactive brand deletion in `Navbar.tsx` dropdown with hover-activated `Trash2` action and seamless switching of active brand. Unit & integration tests added (68/68 tests passing).
+- [x] T11.8 Production Deployment Readiness & Remote Git Sync.
+      Evidence: Formatted all codebase with Ruff, verified Next.js production build (`npm run build`), synced remote repository to `https://github.com/G-Narendra/Social-Insights.git`.
 
 ## Decisions
 - 2026-10-05: Using NVIDIA NIM API (free tier, ~40 RPM, ~1000 credits) instead of Ollama

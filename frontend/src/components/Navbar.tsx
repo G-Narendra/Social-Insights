@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { Keyword } from "@/lib/types";
 import { api } from "@/lib/api";
@@ -19,6 +20,7 @@ interface NavbarProps {
   keywords: Keyword[];
   activeKeyword: string;
   onSelectKeyword: (kw: string) => void;
+  onDeleteKeyword?: (id: number, term: string) => void;
   onOpenCollectModal: () => void;
   isCollecting?: boolean;
 }
@@ -27,6 +29,7 @@ export function Navbar({
   keywords,
   activeKeyword,
   onSelectKeyword,
+  onDeleteKeyword,
   onOpenCollectModal,
   isCollecting = false,
 }: NavbarProps) {
@@ -106,26 +109,46 @@ export function Navbar({
                 />
               </div>
 
-              <div className="max-h-48 overflow-y-auto space-y-1">
+              <div className="max-h-56 overflow-y-auto space-y-1">
                 {filteredKeywords.map((k) => (
-                  <button
+                  <div
                     key={k.id}
-                    onClick={() => {
-                      onSelectKeyword(k.term);
-                      setDropdownOpen(false);
-                      setSearchFilter("");
-                    }}
-                    className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg flex items-center justify-between ${
+                    className={`group w-full px-2.5 py-1.5 text-xs rounded-lg flex items-center justify-between transition-colors ${
                       k.term.toLowerCase() === activeKeyword.toLowerCase()
                         ? "bg-indigo-600/20 text-indigo-300 font-semibold"
                         : "text-slate-300 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
-                    <span className="truncate">{k.term}</span>
-                    <span className="text-[10px] text-slate-400 px-1.5 py-0.5 rounded bg-slate-800">
-                      {k.mention_count}
-                    </span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectKeyword(k.term);
+                        setDropdownOpen(false);
+                        setSearchFilter("");
+                      }}
+                      className="flex-1 text-left truncate flex items-center gap-1.5 focus:outline-none"
+                    >
+                      <span className="truncate">{k.term}</span>
+                    </button>
+                    <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                      <span className="text-[10px] text-slate-400 px-1.5 py-0.5 rounded bg-slate-800/80 group-hover:bg-slate-700/80">
+                        {k.mention_count}
+                      </span>
+                      {onDeleteKeyword && (
+                        <button
+                          type="button"
+                          title={`Remove ${k.term}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteKeyword(k.id, k.term);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded transition-all focus:opacity-100"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 ))}
                 {filteredKeywords.length === 0 && (
                   <p className="text-xs text-slate-400 text-center py-2">No brands found</p>

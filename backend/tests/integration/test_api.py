@@ -63,6 +63,25 @@ class TestKeywordEndpoints:
         kw_list = list_res.json()
         assert any(k["term"] == "Tesla" for k in kw_list)
 
+    @pytest.mark.asyncio
+    async def test_delete_keyword_endpoint(self, async_client: AsyncClient) -> None:
+        # Create a keyword to delete
+        res = await async_client.post(
+            "/api/keywords",
+            json={"term": "DisposableBrand"},
+        )
+        assert res.status_code == 201
+        kw_id = res.json()["id"]
+
+        # Delete by id
+        del_res = await async_client.delete(f"/api/keywords/{kw_id}")
+        assert del_res.status_code == 200
+        assert del_res.json()["keyword_id"] == kw_id
+
+        # Second delete returns 404
+        del_again = await async_client.delete(f"/api/keywords/{kw_id}")
+        assert del_again.status_code == 404
+
 
 class TestCollectionEndpoints:
     @pytest.mark.asyncio

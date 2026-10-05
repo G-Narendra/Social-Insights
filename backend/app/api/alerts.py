@@ -8,6 +8,7 @@ import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
@@ -66,9 +67,6 @@ async def resolve_alert(
     return {"message": "Alert marked as resolved", "alert_id": alert_id}
 
 
-from pydantic import BaseModel, Field
-
-
 class SimulateAlertRequest(BaseModel):
     keyword: str
     scenario: str = Field(default="sentiment_spike", description="sentiment_spike or volume_surge")
@@ -121,4 +119,3 @@ async def simulate_alert(
         "created_at": alert.created_at,
         "resolved_at": alert.resolved_at,
     }
-

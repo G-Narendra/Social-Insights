@@ -89,6 +89,12 @@ export const api = {
     });
   },
 
+  async deleteKeyword(keywordId: number): Promise<{ message: string; keyword_id?: number }> {
+    return request<{ message: string; keyword_id?: number }>(`/api/keywords/${keywordId}`, {
+      method: "DELETE",
+    });
+  },
+
   // Collection Ingestion Trigger
   async triggerCollection(data: {
     keyword: string;

@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Keyword, Mention
+from app.db.models import Alert, CollectionRun, Keyword, Mention, Summary
 
 
 async def get_or_create_keyword(
@@ -103,3 +103,30 @@ async def update_last_collected(
     if keyword:
         keyword.last_collected_at = timestamp or datetime.datetime.now(datetime.UTC)
         await session.commit()
+
+
+async def delete_keyword(session: AsyncSession, keyword_id: int) -> bool:
+    """
+    Delete a tracked keyword and all its associated mentions, collection runs,
+    summaries, and alerts in a single transaction.
+    """
+    keyword = await session.get(Keyword, keyword_id)
+    if not keyword:
+        return False
+
+    # Cascading deletion of all dependent records
+    await session.execute(delete(Alert).where(Alert.keyword_id == keyword_id))
+    await session.execute(delete(Summary).where(Summary.keyword_id == keyword_id))
+    await session.execute(delete(Mention).where(Mention.keyword_id == keyword_id))
+    await session.execute(delete(CollectionRun).where(CollectionRun.keyword_id == keyword_id))
+    await session.execute(delete(Keyword).where(Keyword.id == keyword_id))
+    await session.commit()
+    return True
+
+
+async def delete_keyword_by_term(session: AsyncSession, term: str) -> bool:
+    """Delete a tracked keyword by its term name."""
+    keyword = await get_keyword_by_term(session, term)
+    if not keyword:
+        return False
+    return await delete_keyword(session, keyword.id)

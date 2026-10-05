@@ -183,7 +183,7 @@ class TestWikipediaConnector:
                     {
                         "pageid": 12345,
                         "title": "Elon Musk",
-                        "snippet": "Elon Reeve Musk is a <span class=\"searchmatch\">businessman</span> and investor.",
+                        "snippet": 'Elon Reeve Musk is a <span class="searchmatch">businessman</span> and investor.',
                         "size": 45000,
                         "wordcount": 6200,
                         "timestamp": "2026-01-10T12:00:00Z",

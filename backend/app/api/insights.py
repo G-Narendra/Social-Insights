@@ -55,6 +55,11 @@ async def get_summary(
     response_model=SummaryResponse,
     dependencies=[Depends(enforce_rate_limit(max_requests=5, window_seconds=60))],
 )
+@router.post(
+    "/insights/summary/refresh",
+    response_model=SummaryResponse,
+    dependencies=[Depends(enforce_rate_limit(max_requests=5, window_seconds=60))],
+)
 async def refresh_summary(
     session: Annotated[AsyncSession, Depends(get_db)],
     keyword: str | None = Query(default=None),

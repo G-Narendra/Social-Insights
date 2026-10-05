@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 
 from app.config import Settings, get_settings
+from app.ingestion.base import SourceConnector
 from app.ingestion.github import GitHubConnector
 from app.ingestion.google_news_rss import GoogleNewsRSSConnector
 from app.ingestion.hackernews import HackerNewsConnector

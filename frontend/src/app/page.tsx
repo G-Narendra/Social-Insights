@@ -261,6 +261,39 @@ export default function DashboardPage() {
     setSummary(null);
   };
 
+  const handleDeleteKeyword = async (id: number, term: string) => {
+    const confirmed = window.confirm(
+      `Remove brand "${term}"?\n\nThis will remove the tracked brand and all its associated mentions, analytics, and summaries.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await api.deleteKeyword(id);
+      const remaining = keywords.filter((k) => k.id !== id);
+      setKeywords(remaining);
+
+      // If active keyword was deleted, switch to first remaining brand
+      if (activeKeyword.toLowerCase() === term.toLowerCase()) {
+        const nextKw = remaining.length > 0 ? remaining[0].term : "";
+        setActiveKeyword(nextKw);
+        setMentions(null);
+        setSummary(null);
+        if (nextKw) {
+          loadDashboardData(nextKw);
+        } else {
+          setStats(null);
+          setTimeseries(null);
+          setTrends([]);
+          setAlerts([]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete keyword", err);
+      alert(`Could not remove ${term}. Please try again.`);
+    }
+  };
+
+
   // Global Keyboard Shortcuts (1-4 for tabs, 'C' for collect, Escape to close)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -293,6 +326,7 @@ export default function DashboardPage() {
         keywords={keywords}
         activeKeyword={activeKeyword}
         onSelectKeyword={(kw) => setActiveKeyword(kw)}
+        onDeleteKeyword={handleDeleteKeyword}
         onOpenCollectModal={() => setIsCollectModalOpen(true)}
       />
 

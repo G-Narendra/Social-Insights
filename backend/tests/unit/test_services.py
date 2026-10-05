@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.mentions import MentionFilterParams, RawMention
 from app.services.keyword_service import (
+    delete_keyword,
     get_keyword_by_id,
     get_keyword_by_term,
     get_or_create_keyword,
@@ -61,6 +62,30 @@ class TestKeywordService:
         assert len(kw_list) >= 1
         tesla_entry = next(k for k in kw_list if k["term"] == "Tesla")
         assert tesla_entry["mention_count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_delete_keyword_cascades_mentions(self, db_session: AsyncSession) -> None:
+        kw = await get_or_create_keyword(db_session, "To_Delete")
+        raw = RawMention(
+            source="hackernews",
+            source_id="del-1",
+            text="Testing deletion",
+            keyword="To_Delete",
+        )
+        await upsert_mention(db_session, kw.id, run_id=1, raw=raw)
+
+        # Confirm keyword and mention exist
+        assert await get_keyword_by_id(db_session, kw.id) is not None
+
+        # Delete keyword
+        deleted = await delete_keyword(db_session, kw.id)
+        assert deleted is True
+
+        # Verify keyword is gone
+        assert await get_keyword_by_id(db_session, kw.id) is None
+
+        # Verify deleting non-existent keyword returns False
+        assert await delete_keyword(db_session, kw.id) is False
 
 
 class TestMentionService:

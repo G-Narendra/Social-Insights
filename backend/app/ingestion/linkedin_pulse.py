@@ -91,7 +91,9 @@ class LinkedInPulseConnector(SourceConnector):
                 title = parts[0]
                 publisher = parts[1]
 
-            combined_text = f"{title}. {clean_summary}" if clean_summary and clean_summary != title else title
+            combined_text = (
+                f"{title}. {clean_summary}" if clean_summary and clean_summary != title else title
+            )
             if not combined_text.strip():
                 continue
 
@@ -99,9 +101,7 @@ class LinkedInPulseConnector(SourceConnector):
             pub_date = None
             if entry.get("published_parsed"):
                 try:
-                    pub_date = datetime.datetime(
-                        *entry.published_parsed[:6], tzinfo=datetime.UTC
-                    )
+                    pub_date = datetime.datetime(*entry.published_parsed[:6], tzinfo=datetime.UTC)
                 except Exception:
                     pub_date = None
 
