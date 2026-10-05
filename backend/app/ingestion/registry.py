@@ -9,11 +9,13 @@ from __future__ import annotations
 import logging
 
 from app.config import Settings, get_settings
-from app.ingestion.base import SourceConnector
+from app.ingestion.github import GitHubConnector
 from app.ingestion.google_news_rss import GoogleNewsRSSConnector
 from app.ingestion.hackernews import HackerNewsConnector
+from app.ingestion.linkedin_pulse import LinkedInPulseConnector
 from app.ingestion.reddit import RedditConnector
 from app.ingestion.stackexchange import StackExchangeConnector
+from app.ingestion.wikipedia import WikipediaConnector
 from app.ingestion.youtube import YouTubeConnector
 
 logger = logging.getLogger(__name__)
@@ -28,6 +30,9 @@ def create_all_connectors(settings: Settings | None = None) -> dict[str, SourceC
     connectors: dict[str, SourceConnector] = {
         "hackernews": HackerNewsConnector(),
         "googlenews": GoogleNewsRSSConnector(),
+        "wikipedia": WikipediaConnector(),
+        "github": GitHubConnector(),
+        "linkedin": LinkedInPulseConnector(),
         "reddit": RedditConnector(
             client_id=cfg.reddit_client_id,
             client_secret=cfg.reddit_client_secret,

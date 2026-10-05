@@ -20,8 +20,11 @@ interface CollectionModalProps {
 }
 
 const AVAILABLE_SOURCES = [
-  { id: "hackernews", label: "Hacker News (API)" },
   { id: "googlenews", label: "Google News (RSS)" },
+  { id: "hackernews", label: "Hacker News (API)" },
+  { id: "wikipedia", label: "Wikipedia (API)" },
+  { id: "linkedin", label: "LinkedIn / Wire (RSS)" },
+  { id: "github", label: "GitHub Discussions" },
   { id: "stackexchange", label: "Stack Exchange (API)" },
   { id: "reddit", label: "Reddit (API/Mock)" },
   { id: "youtube", label: "YouTube (API/Mock)" },
@@ -38,8 +41,11 @@ export function CollectionModal({
   const [contextHint, setContextHint] = useState("");
   const [limit, setLimit] = useState(25);
   const [selectedSources, setSelectedSources] = useState<string[]>([
-    "hackernews",
     "googlenews",
+    "hackernews",
+    "wikipedia",
+    "linkedin",
+    "github",
     "stackexchange",
   ]);
 

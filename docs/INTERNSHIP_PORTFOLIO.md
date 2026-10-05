@@ -179,3 +179,27 @@ Following discussions with the engineering evaluation team, we expanded the plat
      ```
   3. **Zero-Data State Handling**: Designed dedicated empty-state cards for brands with zero collected mentions, instructing the user on how to trigger collection without breaking the comparison matrix.
 
+---
+
+## 8. Global Multi-Source Expansion & Public Figure Intelligence
+
+To achieve global enterprise reach and cover both corporate brands and prominent public figures, we expanded the connector ecosystem to **8 specialized data sources**:
+
+| Source | Connector Class | Coverage Focus | Key Required? |
+|---|---|---|---|
+| **Google News** | `GoogleNewsRSSConnector` | Global mainstream news, editorial journalism, publications | No |
+| **Hacker News** | `HackerNewsConnector` | Tech founders, startups, Silicon Valley discussions | No |
+| **Wikipedia** | `WikipediaConnector` | Verified biographical updates, company milestones, controversies | No |
+| **LinkedIn Pulse** | `LinkedInPulseConnector` | Executive appointments, career moves, corporate restructuring | No |
+| **GitHub** | `GitHubConnector` | Developer feedback, open-source technical issues, bug triage | No |
+| **Stack Exchange** | `StackExchangeConnector` | Technical troubleshooting, developer workflows, questions | No |
+| **Reddit** | `RedditConnector` | Grassroots community opinions, subreddits, consumer banter | Optional |
+| **YouTube** | `YouTubeConnector` | Video commentary, review channels, visual media | Optional |
+
+### Proven Ingestion Across Diverse Entities
+The platform was rigorously evaluated and populated with live, enriched mentions across different categories:
+1. **Public Figures & Tech Leaders**: Evaluated against *Elon Musk* (125 mentions ingested across Hacker News, Google News, Wikipedia, GitHub, and LinkedIn Pulse).
+2. **Global Enterprise Brands**: Evaluated against *NVIDIA* (125 mentions), *Toyota* (1,000 mentions), and *Reliance* (75 mentions).
+3. **Universal Semantic Generalization**: Topic prototype centroids (`all-MiniLM-L6-v2`) and keyword boosts were generalized to accurately categorize both organizational milestones (quarterly earnings, products) and individual executive discourse (leadership statements, controversies, career transitions).
+
+

@@ -172,6 +172,97 @@ class TestStackExchangeConnector:
         await client.close()
 
 
+class TestWikipediaConnector:
+    @pytest.mark.asyncio
+    async def test_search_wikipedia(self, httpx_mock: HTTPXMock) -> None:
+        from app.ingestion.wikipedia import WikipediaConnector
+
+        mock_payload = {
+            "query": {
+                "search": [
+                    {
+                        "pageid": 12345,
+                        "title": "Elon Musk",
+                        "snippet": "Elon Reeve Musk is a <span class=\"searchmatch\">businessman</span> and investor.",
+                        "size": 45000,
+                        "wordcount": 6200,
+                        "timestamp": "2026-01-10T12:00:00Z",
+                    }
+                ]
+            }
+        }
+        httpx_mock.add_response(url=re.compile(r".*wikipedia\.org.*"), json=mock_payload)
+
+        client = ResilientHttpClient()
+        connector = WikipediaConnector(http_client=client)
+
+        mentions = [m async for m in connector.search("Elon Musk", limit=5)]
+        assert len(mentions) == 1
+        m = mentions[0]
+        assert m.source == "wikipedia"
+        assert m.source_id == "wiki_12345"
+        assert "Elon Musk" in m.title
+        assert "businessman and investor" in m.text
+        assert "<span" not in m.text  # HTML cleanly stripped
+        assert m.engagement["wordcount"] == 6200
+        await client.close()
+
+
+class TestGitHubConnector:
+    @pytest.mark.asyncio
+    async def test_search_github_issues(self, httpx_mock: HTTPXMock) -> None:
+        from app.ingestion.github import GitHubConnector
+
+        mock_payload = {
+            "items": [
+                {
+                    "id": 998877,
+                    "title": "Fix memory leak in Toyota telematics SDK",
+                    "body": "When streaming telemetry data over CAN bus, buffer overflows.",
+                    "html_url": "https://github.com/org/repo/issues/42",
+                    "user": {"login": "automotive_dev"},
+                    "created_at": "2026-01-12T09:30:00Z",
+                    "comments": 7,
+                    "reactions": {"total_count": 12},
+                    "state": "open",
+                }
+            ]
+        }
+        httpx_mock.add_response(url=re.compile(r".*api\.github\.com.*"), json=mock_payload)
+
+        client = ResilientHttpClient()
+        connector = GitHubConnector(http_client=client)
+
+        mentions = [m async for m in connector.search("Toyota", limit=5)]
+        assert len(mentions) == 1
+        m = mentions[0]
+        assert m.source == "github"
+        assert m.source_id == "gh_998877"
+        assert "telematics SDK" in m.title
+        assert m.author == "automotive_dev"
+        assert m.engagement["comments"] == 7
+        await client.close()
+
+
+class TestLinkedInPulseConnector:
+    @pytest.mark.asyncio
+    async def test_search_linkedin_pulse(self, httpx_mock: HTTPXMock) -> None:
+        from app.ingestion.linkedin_pulse import LinkedInPulseConnector
+
+        rss_xml = (FIXTURES_DIR / "googlenews_rss.xml").read_text(encoding="utf-8")
+        httpx_mock.add_response(url=re.compile(r".*news\.google\.com/rss.*"), text=rss_xml)
+
+        client = ResilientHttpClient()
+        connector = LinkedInPulseConnector(http_client=client)
+
+        mentions = [m async for m in connector.search("Satya Nadella", limit=5)]
+        assert len(mentions) >= 1
+        m = mentions[0]
+        assert m.source == "linkedin"
+        assert m.extra["is_professional_wire"] is True
+        await client.close()
+
+
 class TestOrchestrator:
     @pytest.mark.asyncio
     async def test_orchestrator_fault_isolation(self) -> None:

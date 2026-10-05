@@ -33,70 +33,70 @@ TOPIC_SET = [
 # Rich prototype descriptions defining each topic's semantic centroid
 TOPIC_PROTOTYPES = {
     "product": [
-        "Vehicle model announcement, specifications, horsepower, torque, dimensions, and styling.",
-        "Interior cabin design, cargo space, seats, exterior paint, headlights, and trim levels.",
-        "Engine performance, hybrid powertrain, transmission, all-wheel drive, and mechanical specs.",
+        "Vehicle model announcement, tech product launch, hardware specifications, and design styling.",
+        "Software platform, artificial intelligence model, mobile app, gadget release, or creative project.",
+        "Powertrain, engine performance, system architecture, device build, and product releases.",
     ],
     "pricing": [
-        "Vehicle price, MSRP, monthly payment, lease options, interest rate, and financing.",
-        "Dealership markup above sticker price, market adjustment fees, discounts, and affordability.",
-        "Too expensive for the value, overpriced options, high cost of ownership, and budget considerations.",
+        "Product price, vehicle MSRP, subscription tier, billing, lease options, and affordability.",
+        "Executive compensation, net worth, company valuation, stock market capitalization, and financing.",
+        "Overpriced goods, expensive options, hidden fees, budget constraints, and cost of ownership.",
     ],
     "customer_service": [
-        "Dealership customer service experience, sales staff professionalism, and salesperson honesty.",
-        "Service department maintenance visit, warranty claims, repair delays, and dealer support.",
-        "Unresponsive customer support, long phone hold times, and poor service center treatment.",
+        "Customer service responsiveness, support desk professionalism, and client satisfaction.",
+        "Public relations communication, official press statements, warranty claims, and user support.",
+        "Unresponsive support representatives, long wait times, and poor service experience.",
     ],
     "quality": [
-        "Long term vehicle reliability, durability over 100k miles, build quality, and dependability.",
-        "Official safety recall, mechanical breakdown, transmission failure, rust, squeaks, and rattles.",
-        "Flawless fit and finish, solid construction, no unexpected repairs, and high consumer reports rating.",
+        "Long-term reliability, build durability, flawless craftsmanship, and proven track record.",
+        "Official safety recall, product defects, system outages, personal credibility, and reputation.",
+        "Solid construction, engineering excellence, high consumer ratings, and dependable execution.",
     ],
     "competitors": [
-        "Comparison against competing brands like Honda, Ford, Hyundai, Tesla, Subaru, Kia, or Chevrolet.",
-        "Why this vehicle is better or worse than alternative rival models in the same segment.",
-        "Shoppers cross-shopping competing automakers and deciding between brand options.",
+        "Comparison against competing brands, industry rivals, alternative peers, and market contenders.",
+        "Why this product or leader is better or worse than market alternatives in the same segment.",
+        "Cross-shopping different solutions, market share competition, and head-to-head comparisons.",
     ],
     "complaints": [
-        "Angry customer regrets purchase, awful experience, lemon law claim, and severe frustration.",
-        "Repeated broken components, unresolved vehicle flaws, dealer refusing repairs, and class action lawsuit.",
-        "Terrible experience from start to finish, completely dissatisfied and warning others not to buy.",
+        "Dissatisfied customer reviews, severe frustration, public controversy, and consumer regret.",
+        "Public backlash, executive criticism, lawsuits, broken promises, ethical concerns, and boycott calls.",
+        "Terrible experience, unresolved defects, severe criticism, and warnings to avoid.",
     ],
     "features": [
-        "Touchscreen infotainment display, Apple CarPlay, Android Auto, navigation, and bluetooth audio.",
-        "Advanced driver assistance systems, adaptive cruise control, lane keep assist, and automated braking.",
-        "Fuel economy, real-world MPG, battery range, wireless phone charging, and heated ventilated seats.",
+        "Product features, technical capabilities, software updates, advanced tools, and innovations.",
+        "Key specifications, algorithmic breakthroughs, cutting-edge functionality, and performance metrics.",
+        "New release features, battery range, user interface options, and patent announcements.",
     ],
     "other": [
-        "Stock market shares, quarterly corporate earnings call, general financial news, and executive leadership.",
-        "Miscellaneous discussion, brief passing reference, unrelated background chatter, and casual mention.",
+        "Quarterly corporate earnings, general biographical news, interviews, and public appearances.",
+        "Miscellaneous discussion, passing references, casual background chatter, and general commentary.",
     ],
 }
 
 # Rule boosts for unambiguous lexical indicators
 KEYWORD_BOOSTS = {
     "pricing": re.compile(
-        r"\b(price|pricing|msrp|cost|expensive|markup|discount|lease|financing|\$\d+)\b",
+        r"\b(price|pricing|msrp|cost|expensive|markup|discount|lease|financing|\$\d+|salary|compensation|net worth|valuation|billion|million)\b",
         re.IGNORECASE,
     ),
     "quality": re.compile(
-        r"\b(reliable|reliability|durable|durability|recall|breakdown|transmission|squeak|rattle)\b",
+        r"\b(reliable|reliability|durable|durability|recall|breakdown|transmission|reputation|credibility|integrity|track record|craftsmanship)\b",
         re.IGNORECASE,
     ),
     "customer_service": re.compile(
-        r"\b(dealer|dealership|salesman|sales rep|service department|warranty claim|support agent)\b",
+        r"\b(dealer|dealership|salesman|sales rep|service department|warranty claim|support agent|customer support|client service|public relations|press office)\b",
         re.IGNORECASE,
     ),
     "competitors": re.compile(
-        r"\b(honda|ford|hyundai|tesla|kia|subaru|nissan|chevrolet|mazda|competitor|rival)\b",
+        r"\b(honda|ford|hyundai|tesla|kia|subaru|nissan|chevrolet|mazda|apple|google|microsoft|competitor|rival|versus|vs\.?|alternative|peer|contender|outperformed)\b",
         re.IGNORECASE,
     ),
     "complaints": re.compile(
-        r"\b(lemon|lawsuit|regret|furious|horrible|terrible|awful|scam|unacceptable)\b",
+        r"\b(lemon|lawsuit|regret|furious|horrible|terrible|awful|scam|unacceptable|backlash|scandal|controversy|criticism|dispute|boycott)\b",
         re.IGNORECASE,
     ),
     "features": re.compile(
-        r"\b(carplay|android auto|infotainment|mpg|fuel economy|cruise control|heated seats|sound system)\b",
+        r"\b(carplay|android auto|infotainment|mpg|fuel economy|cruise control|heated seats|sound system|feature|features|specs|specification|capability|capabilities|update|innovation)\b",
         re.IGNORECASE,
     ),
 }
