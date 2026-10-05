@@ -46,3 +46,28 @@ class TestSettings:
         """YouTube connector needs an API key."""
         settings = Settings(youtube_api_key=None)
         assert settings.youtube_available is False
+
+    def test_database_url_normalization(self) -> None:
+        """Verify postgres:// and postgresql:// are normalized to postgresql+asyncpg://."""
+        s1 = Settings(database_url="postgres://user:pass@localhost:5432/db")
+        assert s1.database_url == "postgresql+asyncpg://user:pass@localhost:5432/db"
+
+        s2 = Settings(database_url="postgresql://user:pass@localhost:5432/db")
+        assert s2.database_url == "postgresql+asyncpg://user:pass@localhost:5432/db"
+
+    def test_normalize_database_connection_sslmode_handling(self) -> None:
+        """Verify sslmode=require query param is stripped and mapped to connect_args['ssl'] = 'require'."""
+        from app.db.session import normalize_database_connection
+
+        clean_url, connect_args = normalize_database_connection(
+            "postgresql+asyncpg://user:pass@ep-test.neon.tech/social_insights?sslmode=require"
+        )
+        assert "sslmode" not in clean_url
+        assert clean_url == "postgresql+asyncpg://user:pass@ep-test.neon.tech/social_insights"
+        assert connect_args == {"ssl": "require"}
+
+        # SQLite check
+        sqlite_url, sqlite_args = normalize_database_connection("sqlite+aiosqlite:///./test.db")
+        assert sqlite_url == "sqlite+aiosqlite:///./test.db"
+        assert sqlite_args == {"check_same_thread": False}
+

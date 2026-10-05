@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import get_settings
 from app.db.models import Base
+from app.db.session import normalize_database_connection
 
 # Alembic Config object
 config = context.config
@@ -25,16 +26,17 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Use database_url from application settings
+# Use normalized database_url from application settings
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.database_url)
+clean_url, _ = normalize_database_connection(settings.database_url)
+config.set_main_option("sqlalchemy.url", clean_url)
 
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
+    clean_url, _ = normalize_database_connection(settings.database_url)
     context.configure(
-        url=url,
+        url=clean_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -58,12 +60,13 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations asynchronously."""
-    configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = settings.database_url
+    from sqlalchemy.ext.asyncio import create_async_engine
 
-    connectable = async_engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
+    clean_url, connect_args = normalize_database_connection(settings.database_url)
+
+    connectable = create_async_engine(
+        clean_url,
+        connect_args=connect_args,
         poolclass=pool.NullPool,
     )
 
