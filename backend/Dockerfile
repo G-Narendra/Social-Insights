@@ -14,11 +14,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install build system tools
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Copy pyproject.toml to resolve dependencies
-COPY pyproject.toml ./
+# Install CPU-optimized PyTorch first (reduces image size by ~1.5GB and prevents build OOM)
+RUN pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
 
-# Install runtime dependencies into an isolated target folder
-RUN pip install --no-cache-dir --prefix=/install .
+# Copy dependencies and install into isolated prefix
+COPY requirements.txt pyproject.toml ./
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # ==============================================================================
 # Stage 2: Minimal runtime image
@@ -41,9 +42,8 @@ RUN groupadd -g 1001 appuser && \
     mkdir -p /app/data /app/.cache/huggingface /app/.cache/sbert && \
     chown -R appuser:appuser /app
 
-# Copy application source code and migrations
+# Copy application source code and migrations configuration
 COPY --chown=appuser:appuser app /app/app
-COPY --chown=appuser:appuser alembic /app/alembic
 COPY --chown=appuser:appuser alembic.ini /app/alembic.ini
 
 # Set environment variables
@@ -60,8 +60,8 @@ USER appuser
 
 # Health check probe
 HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
