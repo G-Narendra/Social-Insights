@@ -1,5 +1,5 @@
 # ==============================================================================
-# Stage 1: Build dependencies in isolated wheels layer
+# Stage 1: Build dependencies in a clean virtual environment
 # ==============================================================================
 FROM python:3.12-slim-bookworm AS builder
 
@@ -11,15 +11,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Create isolated virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 # Install build system tools
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Install CPU-optimized PyTorch first (reduces image size by ~1.5GB and prevents build OOM)
+# Install CPU-optimized PyTorch first into /opt/venv
 RUN pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
 
-# Copy dependencies and install into isolated prefix
+# Copy dependencies and install completely into /opt/venv
 COPY requirements.txt pyproject.toml ./
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # ==============================================================================
 # Stage 2: Minimal runtime image
@@ -33,8 +37,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed python libraries from builder stage
-COPY --from=builder /install /usr/local
+# Copy the complete virtual environment from builder stage
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Create non-root user and persistent directories
 RUN groupadd -g 1001 appuser && \
