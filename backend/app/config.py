@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     nvidia_model: str = "meta/llama-3.2-11b-vision-instruct"
 
     # --- AI/ML tuning ---
+    low_memory_mode: bool = True
     llm_max_items_per_run: int = 20
     confidence_threshold: float = 0.6
     dedup_similarity_threshold: float = 0.92

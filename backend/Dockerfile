@@ -59,15 +59,16 @@ ENV PYTHONUNBUFFERED=1 \
     SENTENCE_TRANSFORMERS_HOME=/tmp/sbert \
     DATABASE_URL=sqlite+aiosqlite:////app/data/social_insights.db \
     APP_ENV=production \
-    PORT=8000
+    LOW_MEMORY_MODE=true \
+    PORT=10000
 
 # Switch to non-privileged user
 USER appuser
 
 # Health check probe
 HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+    CMD curl -f http://localhost:${PORT:-10000}/health || exit 1
 
-EXPOSE 8000
+EXPOSE 10000
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

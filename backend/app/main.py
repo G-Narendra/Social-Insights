@@ -38,6 +38,11 @@ logger = logging.getLogger(__name__)
 
 async def _warmup_ml_models() -> None:
     """Pre-warm ML models in background worker thread pool so first collection runs instantly."""
+    settings = get_settings()
+    if settings.low_memory_mode:
+        logger.info("Low memory mode enabled: Skipping heavy ML model pre-warming.")
+        return
+
     try:
         logger.info("Pre-warming ML models in background worker thread...")
         await asyncio.to_thread(get_sentiment_pipeline)
@@ -59,8 +64,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await init_db()
     logger.info("Database initialized")
 
-    # Start non-blocking background model pre-warming
-    asyncio.create_task(_warmup_ml_models())
+    # Start non-blocking background model pre-warming if not in low memory mode
+    if not settings.low_memory_mode:
+        asyncio.create_task(_warmup_ml_models())
 
     yield
 
@@ -81,12 +87,13 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # CORS — explicit allow-list from config, never wildcard in production
+    # CORS — allow explicit list plus standard Vercel and Render deployments
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
+        allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com|http://localhost:\d+",
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_methods=["*"],
         allow_headers=["*"],
     )
 
@@ -125,6 +132,18 @@ def create_app() -> FastAPI:
                 "error": {"code": "internal_error", "message": "An unexpected error occurred"}
             },
         )
+
+    # Root endpoint
+    @app.get("/", tags=["health"])
+    async def root() -> dict[str, str]:
+        """Root endpoint returning service identity and health links."""
+        return {
+            "status": "ok",
+            "service": "Social Insights API",
+            "version": "1.0.0",
+            "docs": "/docs",
+            "health": "/health",
+        }
 
     # Liveness health check
     @app.get("/health", tags=["health"])

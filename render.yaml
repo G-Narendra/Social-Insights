@@ -23,5 +23,9 @@ services:
         value: /tmp/huggingface
       - key: SENTENCE_TRANSFORMERS_HOME
         value: /tmp/sbert
+      - key: LOW_MEMORY_MODE
+        value: "true"
+      - key: PORT
+        value: "10000"
       - key: TORCH_NUM_THREADS
         value: "1"

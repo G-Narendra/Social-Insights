@@ -17,7 +17,7 @@ import {
   TrendsResponse,
 } from "./types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
 
 export class ApiError extends Error {
   code: string;

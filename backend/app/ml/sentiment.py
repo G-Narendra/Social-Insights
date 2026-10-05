@@ -51,6 +51,8 @@ def analyze_sentiment_batch(
 
     try:
         classifier = get_sentiment_pipeline()
+        if classifier is None:
+            return [_rule_fallback_sentiment(t) for t in cleaned_texts]
         outputs = classifier(cleaned_texts, batch_size=batch_size)
     except Exception as exc:
         logger.warning(
@@ -78,38 +80,56 @@ def analyze_sentiment_batch(
 
 
 def _rule_fallback_sentiment(text: str) -> SentimentResult:
-    """Fast lexical fallback when model is unavailable or in minimal offline test modes."""
+    """Fast lexical sentiment classifier with negation and intensity awareness."""
+    import re
     t_lower = text.lower()
     pos_words = {
-        "love",
-        "great",
-        "excellent",
-        "amazing",
-        "good",
-        "reliable",
-        "best",
-        "perfect",
-        "fantastic",
+        "love", "loved", "loving", "great", "excellent", "amazing", "good",
+        "reliable", "reliability", "best", "perfect", "fantastic", "superb",
+        "awesome", "impressed", "recommend", "outstanding", "brilliant",
+        "favorite", "favourite", "smooth", "fast", "durable", "quality",
+        "solid", "flawless", "helpful", "wonderful", "satisfied", "pleased",
+        "value", "worth", "bargain", "clean", "easy", "intuitive", "efficient",
+        "happy", "liked", "like", "positive", "gem", "top-tier", "exciting",
+        "gamechanger", "delight", "delighted", "kudos", "innovative", "sleek",
     }
     neg_words = {
-        "hate",
-        "awful",
-        "terrible",
-        "bad",
-        "broken",
-        "issue",
-        "problem",
-        "expensive",
-        "fail",
-        "markup",
-        "recall",
+        "hate", "hated", "awful", "terrible", "bad", "broken", "broke",
+        "issue", "issues", "problem", "problems", "expensive", "fail",
+        "failed", "failure", "failing", "markup", "recall", "recalls",
+        "lemon", "worst", "poor", "disappointed", "disappointing", "useless",
+        "annoying", "trash", "garbage", "junk", "scam", "regret", "slow",
+        "bug", "bugs", "buggy", "crash", "crashes", "crashed", "horrible",
+        "unacceptable", "furious", "unresponsive", "waste", "defect", "defects",
+        "glitch", "glitches", "flaw", "flaws", "struggle", "struggling",
+        "overpriced", "disaster", "avoid", "pathetic",
     }
 
-    pos_hits = sum(1 for w in pos_words if w in t_lower)
-    neg_hits = sum(1 for w in neg_words if w in t_lower)
+    words = re.findall(r"\b[a-z\-']+\b", t_lower)
+    pos_hits = 0
+    neg_hits = 0
+    negations = {
+        "not", "no", "never", "hardly", "barely", "don't", "doesn't",
+        "didn't", "isn't", "aren't", "wasn't", "weren't", "cannot", "can't", "won't",
+    }
+
+    for i, w in enumerate(words):
+        is_negated = i > 0 and words[i - 1] in negations
+        if w in pos_words:
+            if is_negated:
+                neg_hits += 1
+            else:
+                pos_hits += 1
+        elif w in neg_words:
+            if is_negated:
+                pos_hits += 1
+            else:
+                neg_hits += 1
 
     if pos_hits > neg_hits:
-        return SentimentResult("positive", 0.75, False)
+        conf = min(0.65 + 0.08 * (pos_hits - neg_hits), 0.95)
+        return SentimentResult("positive", round(conf, 4), False)
     elif neg_hits > pos_hits:
-        return SentimentResult("negative", 0.75, False)
+        conf = min(0.65 + 0.08 * (neg_hits - pos_hits), 0.95)
+        return SentimentResult("negative", round(conf, 4), False)
     return SentimentResult("neutral", 0.60, False)

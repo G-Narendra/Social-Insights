@@ -53,6 +53,11 @@ _embedding_model = None
 
 def get_sentiment_pipeline() -> Any:
     """Lazy load singleton sentiment pipeline."""
+    from app.config import get_settings
+    if get_settings().low_memory_mode:
+        logger.info("Low memory mode enabled: CardiffNLP RoBERTa model not loaded.")
+        return None
+
     global _sentiment_pipeline
     if _sentiment_pipeline is None:
         logger.info("Loading sentiment model: %s on CPU...", SENTIMENT_MODEL_NAME)
@@ -78,8 +83,13 @@ def get_sentiment_pipeline() -> Any:
     return _sentiment_pipeline
 
 
-def get_embedding_model() -> SentenceTransformer:
+def get_embedding_model() -> Any:
     """Lazy load singleton SentenceTransformer model."""
+    from app.config import get_settings
+    if get_settings().low_memory_mode:
+        logger.info("Low memory mode enabled: SentenceTransformers model not loaded.")
+        return None
+
     global _embedding_model
     if _embedding_model is None:
         logger.info("Loading embedding model: %s on CPU...", EMBEDDING_MODEL_NAME)

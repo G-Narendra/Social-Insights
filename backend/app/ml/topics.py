@@ -111,6 +111,9 @@ def get_prototype_centroids() -> dict[str, np.ndarray]:
         return _prototype_centroids
 
     model = get_embedding_model()
+    if model is None:
+        return {}
+
     centroids: dict[str, np.ndarray] = {}
 
     for topic, sentences in TOPIC_PROTOTYPES.items():
@@ -150,7 +153,11 @@ def classify_topics_batch(
 
     try:
         model = get_embedding_model()
+        if model is None:
+            return [_rule_fallback_topic(t) for t in cleaned]
         centroids = get_prototype_centroids()
+        if not centroids:
+            return [_rule_fallback_topic(t) for t in cleaned]
         embeddings = model.encode(cleaned, normalize_embeddings=True)
     except Exception as exc:
         logger.warning("Topic embedding model unavailable (%s). Using rule heuristics.", exc)
@@ -207,8 +214,26 @@ def classify_topics_batch(
 
 
 def _rule_fallback_topic(text: str) -> TopicResult:
-    """Fallback classifier when model is offline."""
+    """Fallback classifier matching keywords with rich pattern boosts."""
+    scores: dict[str, float] = {}
     for topic, pattern in KEYWORD_BOOSTS.items():
-        if pattern.search(text):
-            return TopicResult(topic=topic, score=0.75, secondary_topic=None, embedding=None)
+        matches = len(pattern.findall(text))
+        if matches > 0:
+            scores[topic] = 0.65 + min(matches * 0.08, 0.25)
+
+    if scores:
+        sorted_topics = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        best_topic, best_score = sorted_topics[0]
+        secondary = (
+            sorted_topics[1][0]
+            if len(sorted_topics) > 1 and (best_score - sorted_topics[1][1]) < 0.15
+            else None
+        )
+        return TopicResult(
+            topic=best_topic,
+            score=round(best_score, 4),
+            secondary_topic=secondary,
+            embedding=None,
+        )
+
     return TopicResult(topic="other", score=0.50, secondary_topic=None, embedding=None)

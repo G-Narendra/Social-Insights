@@ -22,6 +22,11 @@ class TestSettings:
         settings = Settings(cors_origins="http://a.com, http://b.com ,http://c.com")
         assert settings.cors_origin_list == ["http://a.com", "http://b.com", "http://c.com"]
 
+    def test_low_memory_mode_default(self) -> None:
+        """Low memory mode defaults to True for lightweight container operations."""
+        settings = Settings()
+        assert settings.low_memory_mode is True
+
     def test_invalid_log_level_rejected(self) -> None:
         """Invalid log levels should fail validation at startup."""
         with pytest.raises(ValueError, match="log_level must be one of"):
