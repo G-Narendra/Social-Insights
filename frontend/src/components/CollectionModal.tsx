@@ -88,24 +88,37 @@ export function CollectionModal({
       const runId = triggerRes.run_id;
       setProgressMsg("Ingesting mentions from public APIs & RSS...");
 
-      // Poll until succeeded or failed
-      const maxPolls = 40;
+      // Poll until succeeded or failed with transient glitch tolerance
+      const maxPolls = 60;
+      let consecutiveErrors = 0;
       for (let i = 0; i < maxPolls; i++) {
         await new Promise((r) => setTimeout(r, 2000));
-        const statusData = await api.getRunStatus(runId);
-        setRunStatus(statusData.status);
+        try {
+          const statusData = await api.getRunStatus(runId);
+          consecutiveErrors = 0;
+          setRunStatus(statusData.status);
 
-        if (statusData.status === "running") {
-          setProgressMsg("Processing deduplication & running local AI models...");
-        } else if (statusData.status === "succeeded") {
-          setProgressMsg("Enrichment complete! Updating dashboard...");
-          await new Promise((r) => setTimeout(r, 1000));
-          onSuccess(keyword.trim());
-          onClose();
-          return;
-        } else if (statusData.status === "failed") {
-          const errDetail = statusData.errors?.[0]?.error || "Collection run failed";
-          throw new Error(errDetail);
+          if (statusData.status === "running") {
+            setProgressMsg("Processing deduplication & running local AI models...");
+          } else if (statusData.status === "succeeded") {
+            setProgressMsg("Enrichment complete! Updating dashboard...");
+            await new Promise((r) => setTimeout(r, 1000));
+            onSuccess(keyword.trim());
+            onClose();
+            return;
+          } else if (statusData.status === "failed") {
+            const errDetail = statusData.errors?.[0]?.error || "Collection run failed";
+            throw new Error(errDetail);
+          }
+        } catch (pollErr: any) {
+          if (pollErr.message && pollErr.message.includes("Collection run failed")) {
+            throw pollErr;
+          }
+          consecutiveErrors++;
+          console.warn(`Transient polling hiccup (attempt ${consecutiveErrors}/5):`, pollErr);
+          if (consecutiveErrors >= 5) {
+            throw pollErr;
+          }
         }
       }
 

@@ -15,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
+import asyncio
+
 from app.api import (
     alerts,
     collect,
@@ -28,8 +30,22 @@ from app.api import (
 from app.config import get_settings
 from app.db.session import close_db, get_session_factory, init_db
 from app.logging_config import setup_logging
+from app.ml.model_loader import get_embedding_model, get_sentiment_pipeline
+from app.ml.topics import get_prototype_centroids
 
 logger = logging.getLogger(__name__)
+
+
+async def _warmup_ml_models() -> None:
+    """Pre-warm ML models in background worker thread pool so first collection runs instantly."""
+    try:
+        logger.info("Pre-warming ML models in background worker thread...")
+        await asyncio.to_thread(get_sentiment_pipeline)
+        await asyncio.to_thread(get_embedding_model)
+        await asyncio.to_thread(get_prototype_centroids)
+        logger.info("ML models successfully pre-warmed.")
+    except Exception as exc:
+        logger.warning("ML model pre-warmup deferred (%s)", exc)
 
 
 @asynccontextmanager
@@ -42,6 +58,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize database tables
     await init_db()
     logger.info("Database initialized")
+
+    # Start non-blocking background model pre-warming
+    asyncio.create_task(_warmup_ml_models())
 
     yield
 

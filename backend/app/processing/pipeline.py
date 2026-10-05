@@ -71,7 +71,7 @@ async def process_raw_mentions(
         text_clean = normalize_text(raw.text)
         content_hash = compute_content_hash(text_clean)
 
-        # Upsert record in database with raw text intact
+        # Upsert record in database with raw text intact (flush without per-row commit)
         mention, is_new = await upsert_mention(
             session=session,
             keyword_id=keyword_id,
@@ -79,6 +79,7 @@ async def process_raw_mentions(
             raw=raw,
             content_hash=content_hash,
             canonical_url=canonical_url,
+            commit=False,
         )
 
         mention.text_clean = text_clean

@@ -21,11 +21,13 @@ async def upsert_mention(
     raw: RawMention,
     content_hash: str | None = None,
     canonical_url: str | None = None,
+    commit: bool = True,
 ) -> tuple[Mention, bool]:
     """
     Idempotent insert or retrieval of a mention.
     Returns (mention, created) where created is True if newly inserted.
     Guarantees no duplicate (source, source_id) pairs are inserted.
+    If commit=False, flushes to populate IDs without issuing disk commits.
     """
     query = select(Mention).where(
         Mention.source == raw.source,
@@ -55,8 +57,11 @@ async def upsert_mention(
         status="collected",
     )
     session.add(mention)
-    await session.commit()
-    await session.refresh(mention)
+    if commit:
+        await session.commit()
+        await session.refresh(mention)
+    else:
+        await session.flush()
     return mention, True
 
 
@@ -174,3 +179,27 @@ async def update_mention_enrichment(
             mention.embedding = embedding
         mention.status = "done"
         await session.commit()
+
+
+async def bulk_update_mention_enrichments(
+    session: AsyncSession,
+    enrichments: list[dict],
+) -> None:
+    """
+    Batch-update multiple mention enrichments in a single atomic commit.
+    Eliminates SQLite disk locking churn.
+    """
+    for item in enrichments:
+        mention = await session.get(Mention, item["mention_id"])
+        if mention:
+            mention.sentiment = item["sentiment"]
+            mention.sentiment_score = item["sentiment_score"]
+            mention.topic = item["topic"]
+            mention.topic_score = item["topic_score"]
+            mention.secondary_topic = item.get("secondary_topic")
+            mention.enriched_by = item.get("enriched_by", "model")
+            if "embedding" in item and item["embedding"]:
+                mention.embedding = item["embedding"]
+            mention.status = "done"
+    await session.commit()
+

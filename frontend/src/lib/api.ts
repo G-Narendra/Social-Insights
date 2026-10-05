@@ -31,36 +31,61 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, retries = 2): Promise<T> {
   const url = `${BASE_URL}${path}`;
   const headers = new Headers(options.headers || {});
   if (!headers.has("Content-Type") && options.body) {
     headers.set("Content-Type", "application/json");
   }
 
-  const res = await fetch(url, {
-    ...options,
-    headers,
-  });
+  const isGet = !options.method || options.method.toUpperCase() === "GET";
+  const maxAttempts = isGet ? retries : 0;
 
-  if (!res.ok) {
-    let errorMsg = `HTTP ${res.status} ${res.statusText}`;
-    let errorCode = "http_error";
+  for (let attempt = 0; attempt <= maxAttempts; attempt++) {
     try {
-      const errJson = await res.json();
-      if (errJson.error) {
-        errorMsg = errJson.error.message || errorMsg;
-        errorCode = errJson.error.code || errorCode;
-      } else if (errJson.detail) {
-        errorMsg = typeof errJson.detail === "string" ? errJson.detail : JSON.stringify(errJson.detail);
+      const res = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      if (!res.ok) {
+        // If 502/503/504 (transient gateway/proxy disconnect) and we have retries left
+        if (isGet && (res.status === 502 || res.status === 503 || res.status === 504) && attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+          continue;
+        }
+
+        let errorMsg = `HTTP ${res.status} ${res.statusText}`;
+        let errorCode = "http_error";
+        try {
+          const errJson = await res.json();
+          if (errJson.error) {
+            errorMsg = errJson.error.message || errorMsg;
+            errorCode = errJson.error.code || errorCode;
+          } else if (errJson.detail) {
+            errorMsg = typeof errJson.detail === "string" ? errJson.detail : JSON.stringify(errJson.detail);
+          }
+        } catch {
+          // Body not JSON
+        }
+        throw new ApiError(errorMsg, errorCode, res.status);
       }
-    } catch {
-      // Body not JSON
+
+      return (await res.json()) as T;
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        throw err;
+      }
+      // Transient socket hang up or network error on GET: retry with backoff
+      if (isGet && attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+        continue;
+      }
+      throw new ApiError(err?.message || "Network request failed", "network_error", 500);
     }
-    throw new ApiError(errorMsg, errorCode, res.status);
   }
 
-  return (await res.json()) as T;
+  throw new ApiError("Network request failed after retries", "network_error", 500);
 }
 
 export const api = {
