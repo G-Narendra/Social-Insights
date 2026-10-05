@@ -25,6 +25,7 @@ interface InsightsTabProps {
 
 export function InsightsTab({ summary, loading, onRefreshSummary }: InsightsTabProps) {
   const [refreshing, setRefreshing] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleRefresh = async () => {
     try {
@@ -33,6 +34,38 @@ export function InsightsTab({ summary, loading, onRefreshSummary }: InsightsTabP
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const handleCopyReport = () => {
+    if (!summary) return;
+    const text = `# Social Insights AI Briefing — ${summary.keyword}
+Generated: ${new Date(summary.created_at).toLocaleString()}
+Engine: ${summary.model_name || summary.method}
+
+## Executive Summary
+${summary.content}
+`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadReport = () => {
+    if (!summary) return;
+    const text = `# Social Insights AI Briefing — ${summary.keyword}
+Generated: ${new Date(summary.created_at).toLocaleString()}
+Engine: ${summary.model_name || summary.method}
+
+## Executive Summary
+${summary.content}
+`;
+    const blob = new Blob([text], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `social-insights-${summary.keyword.toLowerCase()}-report.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (loading && !summary) {
@@ -94,14 +127,44 @@ export function InsightsTab({ summary, loading, onRefreshSummary }: InsightsTabP
             </div>
           </div>
 
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs text-slate-200 font-semibold border border-slate-700 disabled:opacity-50 transition-all self-start sm:self-center"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-indigo-400" : ""}`} />
-            <span>{refreshing ? "Synthesizing..." : "Refresh Summary"}</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-center">
+            {/* Copy Button */}
+            <button
+              onClick={handleCopyReport}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs text-slate-200 font-semibold border border-slate-700 transition-all"
+            >
+              {copied ? (
+                <>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="text-emerald-400">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="h-3.5 w-3.5 text-slate-300" />
+                  <span>Copy Report</span>
+                </>
+              )}
+            </button>
+
+            {/* Export Markdown */}
+            <button
+              onClick={handleDownloadReport}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs text-slate-200 font-semibold border border-slate-700 transition-all"
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-400" />
+              <span>Export .md</span>
+            </button>
+
+            {/* Refresh Button */}
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-xs text-white font-semibold shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-white" : ""}`} />
+              <span>{refreshing ? "Synthesizing..." : "Refresh Summary"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Synthesis Text */}

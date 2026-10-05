@@ -144,8 +144,11 @@ export default function DashboardPage() {
 
       if (overviewData.status === "fulfilled") setStats(overviewData.value);
       if (tsData.status === "fulfilled") setTimeseries(tsData.value);
-      if (trendsData.status === "fulfilled") setTrends(trendsData.value.trends);
-      if (alertsData.status === "fulfilled") setAlerts(alertsData.value.alerts);
+      if (trendsData.status === "fulfilled") setTrends(trendsData.value.trends || []);
+      if (alertsData.status === "fulfilled") {
+        const val = alertsData.value as any;
+        setAlerts(Array.isArray(val) ? val : val?.alerts || []);
+      }
     } catch (err) {
       console.error("Failed to load dashboard stats", err);
     } finally {
@@ -234,6 +237,31 @@ export default function DashboardPage() {
     setSummary(null);
   };
 
+  // Global Keyboard Shortcuts (1-4 for tabs, 'C' for collect, Escape to close)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        if (e.key === "Escape") setIsCollectModalOpen(false);
+        return;
+      }
+
+      if (e.key === "1") setActiveTab("overview");
+      else if (e.key === "2") setActiveTab("mentions");
+      else if (e.key === "3") setActiveTab("insights");
+      else if (e.key === "4") setActiveTab("compare");
+      else if (e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        setIsCollectModalOpen(true);
+      } else if (e.key === "Escape") {
+        setIsCollectModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top Navbar */}
@@ -255,7 +283,7 @@ export default function DashboardPage() {
             {/* Overview */}
             <button
               onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === "overview"
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
@@ -263,12 +291,13 @@ export default function DashboardPage() {
             >
               <BarChart3 className="h-4 w-4" />
               <span>Overview</span>
+              <kbd className="hidden md:inline-block text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900/60 text-slate-400 border border-slate-700/50">1</kbd>
             </button>
 
             {/* Mentions */}
             <button
               onClick={() => setActiveTab("mentions")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === "mentions"
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
@@ -285,12 +314,13 @@ export default function DashboardPage() {
                   {stats.total_mentions}
                 </span>
               ) : null}
+              <kbd className="hidden md:inline-block text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900/60 text-slate-400 border border-slate-700/50">2</kbd>
             </button>
 
             {/* AI Summary & Intelligence */}
             <button
               onClick={() => setActiveTab("insights")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === "insights"
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
@@ -298,13 +328,14 @@ export default function DashboardPage() {
             >
               <Bot className="h-4 w-4" />
               <span>AI Insights</span>
-              <span className="h-2 w-2 rounded-full bg-violet-400 animate-ping" />
+              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-ping" />
+              <kbd className="hidden md:inline-block text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900/60 text-slate-400 border border-slate-700/50">3</kbd>
             </button>
 
             {/* Competitor Benchmark (BON-02) */}
             <button
               onClick={() => setActiveTab("compare")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === "compare"
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
@@ -312,6 +343,7 @@ export default function DashboardPage() {
             >
               <GitCompare className="h-4 w-4" />
               <span>Compare Brands</span>
+              <kbd className="hidden md:inline-block text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900/60 text-slate-400 border border-slate-700/50">4</kbd>
             </button>
           </div>
 

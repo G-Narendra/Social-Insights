@@ -144,13 +144,14 @@ async def get_timeseries_stats(
     keyword = await session.get(Keyword, keyword_id)
     keyword_term = keyword.term if keyword else "Unknown"
 
-    # Query all done mentions with published_at
+    # Query all done mentions with published_at or collected_at fallback
+    timestamp_col = func.coalesce(Mention.published_at, Mention.collected_at)
     query = (
-        select(Mention.published_at, Mention.sentiment)
+        select(timestamp_col, Mention.sentiment)
         .where(Mention.keyword_id == keyword_id)
         .where(Mention.status == "done")
-        .where(Mention.published_at.isnot(None))
-        .order_by(Mention.published_at.asc())
+        .where(timestamp_col.isnot(None))
+        .order_by(timestamp_col.asc())
     )
     result = await session.execute(query)
     rows = result.all()
@@ -158,13 +159,13 @@ async def get_timeseries_stats(
     # Bucket in python for 100% database portability between SQLite and Postgres
     buckets_map: dict[str, dict[str, int]] = {}
 
-    for published_at, sentiment in rows:
-        if not published_at:
+    for ts, sentiment in rows:
+        if not ts:
             continue
         if interval == "hour":
-            bucket_key = published_at.strftime("%Y-%m-%d %H:00")
+            bucket_key = ts.strftime("%Y-%m-%d %H:00")
         else:
-            bucket_key = published_at.strftime("%Y-%m-%d")
+            bucket_key = ts.strftime("%Y-%m-%d")
 
         if bucket_key not in buckets_map:
             buckets_map[bucket_key] = {"total": 0, "positive": 0, "neutral": 0, "negative": 0}
