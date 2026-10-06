@@ -5,16 +5,24 @@ import {
   Activity,
   CheckCircle2,
   ChevronDown,
+  Crown,
+  Eye,
   Layers,
+  LineChart,
+  LogOut,
   Plus,
   Radio,
   RefreshCw,
   Search,
+  Shield,
   Sparkles,
   Trash2,
+  User as UserIcon,
+  Zap,
 } from "lucide-react";
-import { Keyword } from "@/lib/types";
+import { Keyword, UserRole } from "@/lib/types";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface NavbarProps {
   keywords: Keyword[];
@@ -33,8 +41,10 @@ export function Navbar({
   onOpenCollectModal,
   isCollecting = false,
 }: NavbarProps) {
+  const { user, role, demoLogin, logout, openAuthModal, isAuthenticated } = useAuth();
   const [backendHealthy, setBackendHealthy] = useState<boolean | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
 
   useEffect(() => {
@@ -59,8 +69,37 @@ export function Navbar({
     k.term.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
+  const isViewer = role === "viewer";
+  const isAdmin = role === "admin";
+
+  const getRoleBadge = (r: UserRole) => {
+    switch (r) {
+      case "admin":
+        return {
+          icon: <Crown className="h-3 w-3 text-amber-400" />,
+          label: "Admin",
+          classes: "bg-amber-500/10 text-amber-300 border-amber-500/30",
+        };
+      case "analyst":
+        return {
+          icon: <LineChart className="h-3 w-3 text-sky-400" />,
+          label: "Analyst",
+          classes: "bg-sky-500/10 text-sky-300 border-sky-500/30",
+        };
+      case "viewer":
+      default:
+        return {
+          icon: <Eye className="h-3 w-3 text-slate-400" />,
+          label: "Viewer",
+          classes: "bg-slate-800 text-slate-300 border-slate-700",
+        };
+    }
+  };
+
+  const badge = getRoleBadge(role);
+
   return (
-    <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3.5">
+    <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Brand identity */}
         <div className="flex items-center gap-3">
@@ -134,12 +173,19 @@ export function Navbar({
                       {onDeleteKeyword && (
                         <button
                           type="button"
-                          title={`Remove ${k.term}`}
+                          title={isAdmin ? `Remove ${k.term}` : "Admin permissions required to delete brands"}
+                          disabled={!isAdmin}
                           onClick={(e) => {
                             e.stopPropagation();
-                            onDeleteKeyword(k.id, k.term);
+                            if (isAdmin) {
+                              onDeleteKeyword(k.id, k.term);
+                            }
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded transition-all focus:opacity-100"
+                          className={`p-1 rounded transition-all ${
+                            isAdmin
+                              ? "opacity-0 group-hover:opacity-100 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 focus:opacity-100"
+                              : "hidden"
+                          }`}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -154,25 +200,31 @@ export function Navbar({
 
               <div className="pt-2 border-t border-slate-800 mt-2">
                 <button
+                  disabled={isViewer}
                   onClick={() => {
                     setDropdownOpen(false);
                     onOpenCollectModal();
                   }}
-                  className="w-full text-left px-2.5 py-1.5 text-xs rounded-lg text-indigo-400 hover:bg-indigo-950/40 flex items-center gap-1.5 font-medium"
+                  className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg flex items-center gap-1.5 font-medium ${
+                    isViewer
+                      ? "text-slate-500 cursor-not-allowed"
+                      : "text-indigo-400 hover:bg-indigo-950/40"
+                  }`}
+                  title={isViewer ? "Viewers cannot track new brands" : undefined}
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Track New Keyword...
+                  <span>{isViewer ? "Track Brand (Requires Analyst/Admin)" : "Track New Keyword..."}</span>
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-3">
+        {/* Right actions: Health, RBAC Role Switcher & User Menu, Ingestion CTA */}
+        <div className="flex items-center gap-2.5">
           {/* Health indicator */}
           <div
-            className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+            className={`hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
               backendHealthy === true
                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                 : backendHealthy === false
@@ -196,18 +248,143 @@ export function Navbar({
               : "Connecting..."}
           </div>
 
+          {/* User & Role Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="flex items-center gap-2 py-1 px-2 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 transition-colors text-xs text-slate-200"
+            >
+              <div className="h-6 w-6 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center font-semibold text-[11px] text-indigo-300">
+                {user?.email ? user.email.charAt(0).toUpperCase() : "U"}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="hidden sm:inline font-medium max-w-[110px] truncate text-slate-300">
+                  {user?.full_name || user?.email?.split("@")[0] || "Guest"}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${badge.classes}`}
+                >
+                  {badge.icon}
+                  {badge.label}
+                </span>
+              </div>
+              <ChevronDown className="h-3 w-3 text-slate-400" />
+            </button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2.5 z-50 animate-fadeIn">
+                <div className="p-2 bg-slate-950/70 rounded-xl border border-slate-800/80 mb-2">
+                  <p className="text-xs font-semibold text-white truncate">
+                    {user?.full_name || "Enterprise User"}
+                  </p>
+                  <p className="text-[11px] text-slate-400 truncate">{user?.email || "demo@socialinsights.io"}</p>
+                  <div className="mt-1.5 flex items-center justify-between text-[10px]">
+                    <span className="text-slate-400">Current Permissions:</span>
+                    <span className={`px-1.5 py-0.5 rounded border uppercase font-bold text-[9px] ${badge.classes}`}>
+                      {role}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 1-Click Role Switcher */}
+                <div className="mb-2">
+                  <div className="px-2 py-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 flex items-center gap-1">
+                    <Zap className="h-2.5 w-2.5 text-amber-400" />
+                    <span>Quick Switch RBAC Role:</span>
+                  </div>
+                  <div className="space-y-1">
+                    {(["admin", "analyst", "viewer"] as UserRole[]).map((r) => {
+                      const itemBadge = getRoleBadge(r);
+                      const isCurrent = role === r;
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => {
+                            demoLogin(r);
+                            setUserMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
+                            isCurrent
+                              ? "bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/30"
+                              : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            {itemBadge.icon}
+                            <span className="capitalize">{r}</span>
+                          </div>
+                          {isCurrent ? (
+                            <span className="text-[10px] text-indigo-400">Active</span>
+                          ) : (
+                            <span className="text-[10px] text-slate-400">Test</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800 space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      openAuthModal("login");
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    <Shield className="h-3.5 w-3.5 text-indigo-400" />
+                    <span>Sign In With Email...</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Collect button */}
           <button
-            onClick={onOpenCollectModal}
+            onClick={() => {
+              if (isViewer) {
+                alert("Viewer role has read-only access. Use the role switcher in the top right to switch to Admin or Analyst.");
+                return;
+              }
+              onOpenCollectModal();
+            }}
             disabled={isCollecting}
-            className="flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 transition-all disabled:opacity-60"
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-white text-xs font-semibold rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-60 ${
+              isViewer
+                ? "bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700/60"
+                : "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-indigo-600/20"
+            }`}
+            title={isViewer ? "Viewer mode is read-only. Switch role to collect mentions." : undefined}
           >
             {isCollecting ? (
               <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : isViewer ? (
+              <Eye className="h-3.5 w-3.5 text-slate-400" />
             ) : (
               <Sparkles className="h-3.5 w-3.5" />
             )}
-            <span>{isCollecting ? "Collecting..." : "Collect Mentions"}</span>
+            <span>
+              {isCollecting
+                ? "Collecting..."
+                : isViewer
+                ? "Viewer (Read-Only)"
+                : "Collect Mentions"}
+            </span>
           </button>
         </div>
       </div>

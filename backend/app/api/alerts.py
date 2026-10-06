@@ -11,8 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db
-from app.db.models import Alert
+from app.api.deps import get_db, require_role
+from app.db.models import Alert, User
 from app.ml.alerts import list_active_alerts
 from app.services.keyword_service import get_keyword_by_term
 
@@ -54,8 +54,9 @@ async def get_alerts(
 async def resolve_alert(
     alert_id: int,
     session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(["admin", "analyst"]))],
 ) -> dict:
-    """Mark an alert as acknowledged / resolved."""
+    """Mark an alert as acknowledged / resolved. Requires Admin or Analyst role."""
     alert = await session.get(Alert, alert_id)
     if not alert:
         raise HTTPException(
@@ -76,6 +77,7 @@ class SimulateAlertRequest(BaseModel):
 async def simulate_alert(
     payload: SimulateAlertRequest,
     session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(["admin", "analyst"]))],
 ) -> dict:
     """
     Simulate a statistically significant anomaly alert for evaluator verification.

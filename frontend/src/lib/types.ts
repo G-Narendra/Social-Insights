@@ -198,3 +198,20 @@ export interface CollectionRun {
   per_source: Record<string, number>;
   errors: Array<{ error: string; timestamp: string }>;
 }
+
+export type UserRole = "admin" | "analyst" | "viewer";
+
+export interface User {
+  id: number;
+  email: string;
+  role: UserRole;
+  full_name?: string | null;
+  created_at: string;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+

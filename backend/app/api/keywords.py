@@ -9,7 +9,8 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db
+from app.api.deps import get_db, require_role
+from app.db.models import User
 from app.schemas.keywords import KeywordCreate, KeywordResponse
 from app.services.keyword_service import (
     delete_keyword,
@@ -37,9 +38,11 @@ async def get_tracked_keywords(
 async def create_keyword(
     payload: KeywordCreate,
     session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(["admin", "analyst"]))],
 ) -> KeywordResponse:
     """
     Add a new keyword or brand to track.
+    Requires Admin or Analyst permissions.
     """
     kw = await get_or_create_keyword(
         session,
@@ -54,9 +57,11 @@ async def create_keyword(
 async def delete_tracked_keyword_by_id(
     keyword_id: int,
     session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(["admin"]))],
 ) -> dict[str, Any]:
     """
     Delete a tracked keyword and all its associated mentions, runs, alerts, and summaries.
+    Requires Admin permissions.
     """
     success = await delete_keyword(session, keyword_id)
     if not success:
@@ -70,6 +75,7 @@ async def delete_tracked_keyword_by_id(
 @router.delete("", status_code=status.HTTP_200_OK)
 async def delete_tracked_keyword_by_query(
     session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(["admin"]))],
     keyword_id: int | None = Query(default=None),
     term: str | None = Query(default=None),
 ) -> dict[str, Any]:

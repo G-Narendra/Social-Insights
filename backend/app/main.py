@@ -19,6 +19,7 @@ import asyncio
 
 from app.api import (
     alerts,
+    auth,
     collect,
     compare,
     insights,
@@ -32,6 +33,7 @@ from app.db.session import close_db, get_session_factory, init_db
 from app.logging_config import setup_logging
 from app.ml.model_loader import get_embedding_model, get_sentiment_pipeline
 from app.ml.topics import get_prototype_centroids
+from app.services.auth_service import seed_default_users
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +65,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize database tables
     await init_db()
     logger.info("Database initialized")
+
+    # Seed default RBAC users
+    try:
+        factory = get_session_factory()
+        async with factory() as session:
+            await seed_default_users(session)
+        logger.info("Default RBAC accounts initialized")
+    except Exception as exc:
+        logger.warning("Auto-seed users deferred (%s)", exc)
 
     # Start non-blocking background model pre-warming if not in low memory mode
     if not settings.low_memory_mode:
@@ -168,6 +179,7 @@ def create_app() -> FastAPI:
             )
 
     # Mount API routers
+    app.include_router(auth.router)
     app.include_router(collect.router)
     app.include_router(keywords.router)
     app.include_router(mentions.router)

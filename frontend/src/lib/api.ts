@@ -14,10 +14,48 @@ import {
   StructuredInsights,
   SummaryResponse,
   TimeSeriesResponse,
+  TokenResponse,
   TrendsResponse,
+  User,
+  UserRole,
 } from "./types";
 
 const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+
+let authToken: string | null = null;
+if (typeof window !== "undefined") {
+  try {
+    authToken = localStorage.getItem("social_insights_token");
+  } catch {
+    // ignore local storage restrictions
+  }
+}
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
+  if (typeof window !== "undefined") {
+    try {
+      if (token) {
+        localStorage.setItem("social_insights_token", token);
+      } else {
+        localStorage.removeItem("social_insights_token");
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+}
+
+export function getAuthToken(): string | null {
+  if (!authToken && typeof window !== "undefined") {
+    try {
+      authToken = localStorage.getItem("social_insights_token");
+    } catch {
+      // ignore
+    }
+  }
+  return authToken;
+}
 
 export class ApiError extends Error {
   code: string;
@@ -36,6 +74,11 @@ async function request<T>(path: string, options: RequestInit = {}, retries = 2):
   const headers = new Headers(options.headers || {});
   if (!headers.has("Content-Type") && options.body) {
     headers.set("Content-Type", "application/json");
+  }
+
+  const token = getAuthToken();
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   const isGet = !options.method || options.method.toUpperCase() === "GET";
@@ -220,5 +263,46 @@ export const api = {
   async compareKeywords(keywords: string[]): Promise<CompetitorComparisonResponse> {
     const qp = new URLSearchParams({ keywords: keywords.join(",") });
     return request<CompetitorComparisonResponse>(`/api/compare?${qp.toString()}`);
+  },
+
+  // Authentication & RBAC
+  async login(payload: { email: string; password: string }): Promise<TokenResponse> {
+    const res = await request<TokenResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    setAuthToken(res.access_token);
+    return res;
+  },
+
+  async signup(payload: {
+    email: string;
+    password: string;
+    full_name?: string;
+    role?: UserRole;
+  }): Promise<TokenResponse> {
+    const res = await request<TokenResponse>("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    setAuthToken(res.access_token);
+    return res;
+  },
+
+  async demoLogin(role: UserRole): Promise<TokenResponse> {
+    const res = await request<TokenResponse>("/api/auth/demo-login", {
+      method: "POST",
+      body: JSON.stringify({ role }),
+    });
+    setAuthToken(res.access_token);
+    return res;
+  },
+
+  async getMe(): Promise<User> {
+    return request<User>("/api/auth/me");
+  },
+
+  logout(): void {
+    setAuthToken(null);
   },
 };

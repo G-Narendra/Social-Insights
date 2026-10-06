@@ -11,6 +11,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { AlertItem, TrendItem } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
 
 interface TrendsAlertsBannerProps {
   alerts: AlertItem[];
@@ -25,10 +26,16 @@ export function TrendsAlertsBanner({
   onResolveAlert,
   onSimulateAlert,
 }: TrendsAlertsBannerProps) {
+  const { role } = useAuth();
   const [resolvingId, setResolvingId] = useState<number | null>(null);
   const [simulating, setSimulating] = useState(false);
+  const isViewer = role === "viewer";
 
   const handleResolve = async (id: number) => {
+    if (isViewer) {
+      alert("Viewer role has read-only access. Switch to Admin or Analyst in top navigation to resolve alerts.");
+      return;
+    }
     if (!onResolveAlert) return;
     setResolvingId(id);
     try {
@@ -39,6 +46,10 @@ export function TrendsAlertsBanner({
   };
 
   const handleSimulate = async () => {
+    if (isViewer) {
+      alert("Viewer role has read-only access. Switch to Admin or Analyst in top navigation to simulate alerts.");
+      return;
+    }
     if (!onSimulateAlert) return;
     setSimulating(true);
     try {

@@ -9,7 +9,8 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import enforce_rate_limit, get_db
+from app.api.deps import enforce_rate_limit, get_db, require_role
+from app.db.models import User
 from app.schemas.runs import CollectionRunResponse, CollectRequest
 from app.services.collection_job import execute_collection_pipeline
 from app.services.keyword_service import get_or_create_keyword
@@ -32,6 +33,7 @@ async def trigger_collection(
     payload: CollectRequest,
     background_tasks: BackgroundTasks,
     session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(["admin", "analyst"]))],
 ) -> dict:
     """
     Initiate an asynchronous collection run for a keyword.

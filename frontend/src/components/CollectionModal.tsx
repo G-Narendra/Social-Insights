@@ -6,11 +6,13 @@ import {
   Database,
   Loader2,
   RefreshCw,
+  ShieldAlert,
   Sparkles,
   X,
   Zap,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface CollectionModalProps {
   isOpen: boolean;
@@ -36,6 +38,8 @@ export function CollectionModal({
   defaultKeyword,
   onSuccess,
 }: CollectionModalProps) {
+  const { role } = useAuth();
+  const isViewer = role === "viewer";
   const [keyword, setKeyword] = useState(defaultKeyword || "");
   const [aliases, setAliases] = useState("");
   const [contextHint, setContextHint] = useState("");
@@ -273,6 +277,15 @@ export function CollectionModal({
               </div>
             </div>
 
+            {isViewer && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2">
+                <ShieldAlert className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold">Viewer Mode (Read-Only):</span> Mentions collection requires Analyst or Admin privileges. You can switch your role in the top header anytime.
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
                 {error}
@@ -289,10 +302,10 @@ export function CollectionModal({
               </button>
               <button
                 type="submit"
-                disabled={selectedSources.length === 0}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-xs font-semibold text-white shadow-md shadow-indigo-600/20 active:scale-95 disabled:opacity-50"
+                disabled={isViewer || selectedSources.length === 0}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-xs font-semibold text-white shadow-md shadow-indigo-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Start Ingestion
+                {isViewer ? "Viewer Read-Only" : "Start Ingestion"}
               </button>
             </div>
           </form>

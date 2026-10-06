@@ -9,7 +9,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import enforce_rate_limit, get_db
+from app.api.deps import enforce_rate_limit, get_db, require_role
+from app.db.models import User
 from app.ml.summarizer import get_or_generate_summary
 from app.ml.trends import detect_trends
 from app.schemas.insights import StructuredInsights, SummaryResponse, TrendsResponse
@@ -62,11 +63,13 @@ async def get_summary(
 )
 async def refresh_summary(
     session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(["admin", "analyst"]))],
     keyword: str | None = Query(default=None),
     keyword_id: int | None = Query(default=None),
 ) -> SummaryResponse:
     """
     Force regeneration of an AI summary (rate-limited).
+    Requires Admin or Analyst permissions.
     """
     kw = await _resolve_keyword(session, keyword, keyword_id)
     return await get_or_generate_summary(session, keyword_id=kw.id, force_refresh=True)

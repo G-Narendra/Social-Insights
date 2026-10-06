@@ -16,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import { InsightItem, SummaryResponse } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
 
 interface InsightsTabProps {
   summary: SummaryResponse | null;
@@ -24,10 +25,15 @@ interface InsightsTabProps {
 }
 
 export function InsightsTab({ summary, loading, onRefreshSummary }: InsightsTabProps) {
+  const { role } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleRefresh = async () => {
+    if (role === "viewer") {
+      alert("Viewer role has read-only access. Switch to Admin or Analyst in top navigation to force AI synthesis refresh.");
+      return;
+    }
     try {
       setRefreshing(true);
       await onRefreshSummary();
