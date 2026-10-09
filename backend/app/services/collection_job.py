@@ -19,7 +19,6 @@ from app.processing.pipeline import process_raw_mentions
 from app.services.keyword_service import update_last_collected
 from app.services.mention_service import (
     bulk_update_mention_enrichments,
-    update_mention_enrichment,
 )
 from app.services.run_service import update_run_status
 

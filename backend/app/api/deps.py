@@ -44,7 +44,10 @@ async def get_current_user(
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"code": "unauthorized", "message": "Missing or invalid Bearer authentication token"},
+            detail={
+                "code": "unauthorized",
+                "message": "Missing or invalid Bearer authentication token",
+            },
         )
 
     token = authorization.split("Bearer ", 1)[1].strip()
@@ -52,7 +55,10 @@ async def get_current_user(
     if not payload or "sub" not in payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"code": "invalid_token", "message": "Authentication token has expired or is invalid"},
+            detail={
+                "code": "invalid_token",
+                "message": "Authentication token has expired or is invalid",
+            },
         )
 
     try:

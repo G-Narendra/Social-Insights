@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalTab, setAuthModalTab] = useState<"login" | "signup">("login");
 
-  // On mount: restore session or initialize default demo session
+  // On mount: restore session if previously authenticated
   useEffect(() => {
     let isMounted = true;
 
@@ -46,18 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch {
-        // Stored token expired or invalid; fallback to default demo
-      }
-
-      // Auto-initialize demo Admin session so dashboard is immediately live
-      try {
-        const demoRes = await api.demoLogin("admin");
-        if (isMounted) {
-          setUser(demoRes.user);
-          setToken(demoRes.access_token);
-        }
-      } catch {
-        // Backend offline or warming up
+        // Stored token expired or invalid; clear it
+        api.logout();
       } finally {
         if (isMounted) {
           setIsLoading(false);

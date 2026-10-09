@@ -1,0 +1,64 @@
+name: Keepalive & Health Sentinel
+
+on:
+  schedule:
+    # Run every 14 minutes to prevent Render free-tier spin down (15m inactivity threshold)
+    - cron: "*/14 * * * *"
+  workflow_dispatch:
+    inputs:
+      backend_url:
+        description: "Backend URL to ping"
+        required: false
+        default: "https://social-insights-backend-e442.onrender.com"
+      frontend_url:
+        description: "Frontend URL to ping"
+        required: false
+        default: "https://social-insights-six.vercel.app"
+
+jobs:
+  keepalive-ping:
+    name: Ping Deployments (Render & Vercel)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping Backend and Frontend Health Endpoints
+        env:
+          BACKEND_URL: ${{ github.event.inputs.backend_url || secrets.BACKEND_URL || 'https://social-insights-backend-e442.onrender.com' }}
+          FRONTEND_URL: ${{ github.event.inputs.frontend_url || secrets.FRONTEND_URL || 'https://social-insights-six.vercel.app' }}
+        run: |
+          echo "=========================================="
+          echo "Social Insights Deployment Keepalive Job"
+          echo "Timestamp (UTC): $(date -u)"
+          echo "Target Backend:  $BACKEND_URL"
+          echo "Target Frontend: $FRONTEND_URL"
+          echo "=========================================="
+
+          # 1. Ping Backend Health
+          echo "--> Pinging Backend /health..."
+          BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 "$BACKEND_URL/health" || echo "000")
+          echo "Backend /health response: HTTP $BACKEND_STATUS"
+
+          # 2. Ping Backend Ready
+          echo "--> Pinging Backend /ready..."
+          READY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 "$BACKEND_URL/ready" || echo "000")
+          echo "Backend /ready response: HTTP $READY_STATUS"
+
+          # 3. Ping Frontend Homepage
+          echo "--> Pinging Frontend Homepage..."
+          FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 "$FRONTEND_URL" || echo "000")
+          echo "Frontend response: HTTP $FRONTEND_STATUS"
+
+          echo "=========================================="
+          if [ "$BACKEND_STATUS" -eq 200 ] || [ "$BACKEND_STATUS" -eq 301 ] || [ "$BACKEND_STATUS" -eq 302 ]; then
+            echo "SUCCESS: Backend deployment is warm and active."
+          else
+            echo "WARNING: Backend returned HTTP $BACKEND_STATUS. Instance may be cold-starting."
+          fi
+
+          if [ "$FRONTEND_STATUS" -eq 200 ] || [ "$FRONTEND_STATUS" -eq 301 ] || [ "$FRONTEND_STATUS" -eq 302 ] || [ "$FRONTEND_STATUS" -eq 308 ]; then
+            echo "SUCCESS: Frontend deployment is warm and active."
+          else
+            echo "WARNING: Frontend returned HTTP $FRONTEND_STATUS."
+          fi
+          echo "=========================================="

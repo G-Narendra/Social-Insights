@@ -113,8 +113,8 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-300 border border-slate-500/20">
-        <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
         Neutral {formattedScore}
       </span>
     );
@@ -204,7 +204,7 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
   return (
     <div className="space-y-4">
       {/* Control Filter Toolbar */}
-      <div className="glass-card rounded-2xl p-4 flex flex-col gap-3">
+      <div className="bg-[#111827] border border-white/10 rounded-2xl p-4 flex flex-col gap-3 backdrop-blur-md">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
@@ -214,7 +214,7 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
               placeholder="Search keywords, phrases or authors..."
               value={filters.search}
               onChange={(e) => onFilterChange({ search: e.target.value, page: 1 })}
-              className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#1f2937] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
             />
             {filters.search && (
               <button
@@ -232,7 +232,7 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
             <select
               value={filters.sentiment}
               onChange={(e) => onFilterChange({ sentiment: e.target.value, page: 1 })}
-              className="bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="bg-[#1f2937] border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
             >
               <option value="">All Sentiments</option>
               <option value="positive">Positive</option>
@@ -244,7 +244,7 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
             <select
               value={filters.topic}
               onChange={(e) => onFilterChange({ topic: e.target.value, page: 1 })}
-              className="bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="bg-[#1f2937] border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
             >
               {TOPICS.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -257,7 +257,7 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
             <select
               value={filters.source}
               onChange={(e) => onFilterChange({ source: e.target.value, page: 1 })}
-              className="bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="bg-[#1f2937] border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
             >
               {SOURCES.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -541,7 +541,7 @@ export function MentionsTab({ data, loading, filters, onFilterChange }: Mentions
             return (
               <div
                 key={m.id}
-                className="glass-card rounded-2xl p-4 transition-all hover:border-slate-600/80"
+                className="bg-[#111827] border border-white/10 rounded-2xl p-4 transition-all hover:border-indigo-500/30 backdrop-blur-md"
               >
                 {/* Header row: Source, Sentiment, Topic, Date */}
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">

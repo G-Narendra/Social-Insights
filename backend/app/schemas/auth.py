@@ -10,9 +10,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-EMAIL_REGEX = re.compile(
-    r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-)
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
 RoleType = Literal["admin", "analyst", "viewer"]
 
@@ -21,7 +19,9 @@ class UserSignupRequest(BaseModel):
     """Payload for creating a new user account."""
 
     email: str = Field(..., description="Valid corporate or personal email address")
-    password: str = Field(..., min_length=8, description="Strong password with minimum 8 characters")
+    password: str = Field(
+        ..., min_length=8, description="Strong password with minimum 8 characters"
+    )
     full_name: str | None = Field(default=None, max_length=120)
     role: RoleType = Field(default="analyst", description="Account permission role")
 

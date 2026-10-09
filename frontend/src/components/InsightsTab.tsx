@@ -44,7 +44,7 @@ export function InsightsTab({ summary, loading, onRefreshSummary }: InsightsTabP
 
   const handleCopyReport = () => {
     if (!summary) return;
-    const text = `# Social Insights AI Briefing — ${summary.keyword}
+    const text = `# Social Insights AI Briefing: ${summary.keyword}
 Generated: ${new Date(summary.created_at).toLocaleString()}
 Engine: ${summary.model_name || summary.method}
 
@@ -58,7 +58,7 @@ ${summary.content}
 
   const handleDownloadReport = () => {
     if (!summary) return;
-    const text = `# Social Insights AI Briefing — ${summary.keyword}
+    const text = `# Social Insights AI Briefing: ${summary.keyword}
 Generated: ${new Date(summary.created_at).toLocaleString()}
 Engine: ${summary.model_name || summary.method}
 

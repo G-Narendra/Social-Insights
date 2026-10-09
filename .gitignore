@@ -17,6 +17,7 @@ build/
 node_modules/
 .next/
 out/
+*.tsbuildinfo
 
 # Model caches and tools
 .cache/

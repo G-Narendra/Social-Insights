@@ -1,10 +1,10 @@
 # Social Insights
 
-> **Enterprise-Grade, Open-Source Social Listening & Market Intelligence Platform with Tiered AI.**  
-> Real-time brand monitoring, voice-of-customer synthesis, competitor benchmarking, and statistical anomaly detection across 8 decentralized data sources — with zero required API fees.
+> Open source social listening and tiered intelligence platform.
+> It collects brand mentions across public sources, runs cost-controlled NLP and LLM processing, and presents reputation telemetry in an executive dashboard.
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-G--Narendra%2FSocial--Insights-181717?style=flat&logo=github)](https://github.com/G-Narendra/Social-Insights)
-[![Tests Passing](https://img.shields.io/badge/tests-69%20passed-brightgreen.svg?style=flat)](backend/tests/)
+[![Tests Passing](https://img.shields.io/badge/tests-78%20passed-brightgreen.svg?style=flat)](backend/tests/)
 [![Python 3.12](https://img.shields.io/badge/python-3.12+-blue.svg?style=flat&logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2%20App%20Router-black.svg?style=flat&logo=next.js)](https://nextjs.org/)
@@ -15,58 +15,56 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of contents
 
-- [Overview & Value Proposition](#-overview--value-proposition)
-- [System Architecture](#-system-architecture)
-- [Tiered AI Intelligence Funnel](#-tiered-ai-intelligence-funnel)
-- [Supported Ingestion Connectors](#-supported-ingestion-connectors)
-- [Core Platform Capabilities](#-core-platform-capabilities)
-- [Empirical AI Benchmarks](#-empirical-ai-benchmarks)
-- [Quickstart Guide (Local Development)](#-quickstart-guide-local-development)
-- [Docker & Containerized Deployment](#-docker--containerized-deployment)
-- [Production Deployment Guide](#-production-deployment-guide)
-  - [Architecture Pattern A: Modern PaaS (Vercel + Render + Neon)](#pattern-a-modern-paas-recommended)
-  - [Architecture Pattern B: Self-Hosted VPS (Docker Compose + Caddy SSL)](#pattern-b-self-hosted-vps-single-box)
-- [Environment Configuration Matrix](#-environment-configuration-matrix)
-- [REST API Reference](#-rest-api-reference)
-- [Security & Prompt Injection Hardening](#-security--prompt-injection-hardening)
-- [Testing & Quality Assurance](#-testing--quality-assurance)
-- [License](#-license)
-
----
-
-## 🌟 Overview & Value Proposition
-
-Traditional enterprise social listening solutions (e.g., Brandwatch, Sprinklr, Sprout Social) cost upwards of $10,000–$60,000 annually. Conversely, naive open-source prototypes send raw internet scrapes directly to commercial LLM APIs, resulting in exorbitant token bills, rate limits, latency bottlenecks, and vulnerability to prompt injection.
-
-**Social Insights** solves this with an **intelligent, cost-optimized, tiered architecture**:
-
-1. **Multi-Domain Brand Monitoring**: Track any brand, product, technology, or topic (Automotive, Consumer Tech, SaaS, Web3, Open Source, Healthcare, Fashion, etc.).
-2. **Context-Aware Deduplication & False-Positive Shielding**: Regex word-boundary filtering, domain-specific negative keywords, and contextual hints prevent cross-entity confusion (e.g., disambiguating *OpenAI ChatGPT* from unrelated car or bot mentions).
-3. **8 Global Ingestion Connectors**: Continuously collects discussions, news, issues, and video transcripts without requiring paid subscriptions.
-4. **$0.00 Local Neural Inference Baseline**: Heavy sentiment classification and topic clustering run on local CPUs with sub-15ms latency.
-5. **Targeted LLM Synthesis**: State-of-the-art vision/text models (e.g., NVIDIA NIM Llama 3.2 11B / 3.1 8B or local Ollama) are invoked exclusively for executive synthesis and low-confidence edge cases.
-6. **100% Offline Resiliency**: Deterministic analytics engine produces fact-based, zero-hallucination executive intelligence even when cloud APIs are disconnected or rate-limited.
+- [Overview and system goals](#overview-and-system-goals)
+- [System architecture](#system-architecture)
+- [Tiered intelligence funnel](#tiered-intelligence-funnel)
+- [Supported ingestion connectors](#supported-ingestion-connectors)
+- [Data cleaning and normalization](#data-cleaning-and-normalization)
+- [Role-based access control](#role-based-access-control)
+- [Frontend design system](#frontend-design-system)
+- [Empirical benchmarks](#empirical-benchmarks)
+- [Local development setup](#local-development-setup)
+- [Containerized deployment](#containerized-deployment)
+- [Production deployment guide](#production-deployment-guide)
+- [Environment configuration matrix](#environment-configuration-matrix)
+- [REST API reference](#rest-api-reference)
+- [Security architecture](#security-architecture)
+- [Testing and verification](#testing-and-verification)
+- [License](#license)
 
 ---
 
-## 🏗️ System Architecture
+## Overview and system goals
+
+Social Insights provides continuous brand reputation telemetry, voice-of-customer synthesis, and statistical anomaly detection across public discussion sources without mandatory recurring API fees.
+
+The system addresses specific engineering challenges:
+
+1. **Container memory ceiling**: Backend execution stays strictly below 512 MB RAM to run on Render free instances. Setting `LOW_MEMORY_MODE = true` relies on fast heuristic classifiers and remote LLM endpoints rather than loading local transformer weights into memory. Under benchmark runs, process memory stays below 60 MB.
+2. **Inference cost cap**: Keeps inference costs below $0.0001 per mention through a 4-tier funnel where inexpensive filters run before remote LLM invocations.
+3. **Data cleanliness**: Rejects spam, affiliate links, and duplicate content through NFKC normalization, URL tracking parameter stripping, xxHash64 exact hashing, and Jaccard 3-gram text comparison (threshold 0.85).
+4. **Role-based access control**: Enforces separate permissions for Administrators, Market Analysts, and Executive Viewers, with 1-click evaluation personas available on the login screen.
+
+---
+
+## System architecture
 
 ```
-                                  [ Global Ingestion Sources ]
+                                  [ Public Ingestion Sources ]
                                                 │
     ┌──────────────┬──────────────┬─────────────┴┬─────────────┬──────────────┬──────────────┐
     ▼              ▼              ▼              ▼             ▼              ▼              ▼
-[Google News] [Hacker News] [Stack Exchange] [Wikipedia] [LinkedIn Pulse] [GitHub Issues] [Reddit/YouTube]
+[Google News]  [Hacker News]  [Wikipedia]   [GitHub]   [Stack Exchange]   [Reddit]       [YouTube]
     │              │              │              │             │              │              │
     └──────────────┴──────────────┴──────┬───────┴─────────────┴──────────────┴──────────────┘
                                          │ Raw Social Mentions
                                          ▼
                    ┌───────────────────────────────────────────┐
                    │           FastAPI Ingestion Engine        │
-                   │  - Exponential Backoff & Fault Isolation  │
-                   │  - Idempotent Job Locking (Alembic/Async) │
+                   │  - Concurrent Async HTTP Scrapers         │
+                   │  - Fault Isolation & Per-Source Timeouts  │
                    └─────────────────────┬─────────────────────┘
                                          │
                                          ▼
@@ -74,414 +72,337 @@ Traditional enterprise social listening solutions (e.g., Brandwatch, Sprinklr, S
  │                               TIERED INTELLIGENCE PIPELINE                                │
  │                                                                                           │
  │  ┌─────────────────────────────────────────────────────────────────────────────────────┐  │
- │  │ Tier 0: Deterministic Ingestion Filter (<0.1ms)                                     │  │
- │  │  • URL Tracking Stripper (`utm_*`, `fbclid`, `gclid`) & Canonicalization            │  │
- │  │  • xxHash64 Content Hashing & Exact Duplicate Elimination                           │  │
- │  │  • Strict Regex Word-Boundary Match & Negative Keyword Anti-Collision Filter        │  │
- │  │  • FastText / LangDetect English Language Verification                              │  │
+ │  │ Tier 0: Fast Heuristics & Deterministic Cleaning (<0.1ms, $0.00 cost)               │  │
+ │  │  • URL Tracking Stripper (utm_*, fbclid, gclid) and Canonicalization                │  │
+ │  │  • xxHash64 Exact Hash and Jaccard 3-Gram Text Similarity (0.85 threshold)          │  │
+ │  │  • Regex Word-Boundary Context Matching and Spam / Affiliate Keyword Filter         │  │
+ │  │  • Lexical Sentiment Scoring and 8 Topic Centroids with Negation Handling           │  │
  │  └──────────────────────────────────────────┬──────────────────────────────────────────┘  │
- │                                             │ Clean, Relevant Mentions                    │
+ │                                             │ Clean Mentions                              │
  │                                             ▼                                             │
  │  ┌─────────────────────────────────────────────────────────────────────────────────────┐  │
- │  │ Tier 1: Local Neural Classification (CPU Batched, 5–15ms, $0.00 Cost)               │  │
- │  │  • Sentiment: `cardiffnlp/twitter-roberta-base-sentiment-latest` (85.0% Accuracy)   │  │
- │  │  • Topics: `sentence-transformers/all-MiniLM-L6-v2` Embedding Cosine Space (75.0%)  │  │
- │  │  • Softmax Entropy & Confidence Thresholding (<0.55 triggers low-confidence flag)   │  │
+ │  │ Tier 1: Local Embeddings (Optional, Bypassed in Low Memory Mode)                    │  │
+ │  │  • CardiffNLP RoBERTa Sentiment Classification                                      │  │
+ │  │  • Sentence-Transformers all-MiniLM-L6-v2 Topic Cosine Matching                     │  │
  │  └──────────────────────┬───────────────────────────────────────────┬──────────────────┘  │
  │                         │                                           │                     │
- │                         │ High-Confidence Data                      │ Edge-Cases & Syntheses
+ │                         │ High-Confidence Records                   │ Low-Confidence /    │
+ │                         │                                           │ Batch Synthesis     │
  │                         ▼                                           ▼                     │
  │  ┌──────────────────────────────────────────────┐  ┌───────────────────────────────────┐  │
- │  │ SQLite (WAL) / Managed PostgreSQL (asyncpg)  │  │ Tier 2: NVIDIA NIM / OpenAI LLM   │  │
- │  │ Mentions, Keywords, Runs, & Trend Baselines  │  │  • Compact XML Sandboxing         │  │
- │  └──────────────────────┬───────────────────────┘  │  • Executive VoC Synthesis Cards  │  │
+ │  │ SQLite (WAL) or Managed PostgreSQL (asyncpg) │  │ Tier 2: Remote Frontier LLM       │  │
+ │  │ Mentions, Keywords, Users, & Metrics Data    │  │  • NVIDIA NIM (Llama 3.2 11B)     │  │
+ │  └──────────────────────┬───────────────────────┘  │  • XML Sandboxed Prompt Envelopes │  │
  │                         │                          └─────────────────┬─────────────────┘  │
- │                         │                                            │ (If Offline)       │
- │                         │                                            ▼                    │
- │                         │                          ┌───────────────────────────────────┐  │
- │                         │                          │ Tier 3: Deterministic Engine      │  │
- │                         │                          │  • Zero-Hallucination Fallback    │  │
+ │                         │                                            │ Fallback           │
+ │                         │                          ┌─────────────────┴─────────────────┐  │
+ │                         │                          │ Tier 3: Deterministic Fallback    │  │
+ │                         │                          │  • Structured Markdown Synthesis  │  │
  │                         │                          └─────────────────┬─────────────────┘  │
  │                         │                                            │                    │
  │                         └────────────────────┬───────────────────────┘                    │
  └──────────────────────────────────────────────┼────────────────────────────────────────────┘
-                                                │ REST API / JSON Telemetry
+                                                │ REST API / JWT Telemetry
                                                 ▼
                    ┌───────────────────────────────────────────┐
-                   │          Next.js 14 Web Dashboard         │
-                   │  - Responsive Glassmorphism & Dark Mode   │
-                   │  - NPS Brand Reputation Health Index      │
-                   │  - Topic Velocity & Anomaly Alert Banner  │
-                   │  - Competitor Benchmark & Triage Feed     │
+                   │          Next.js 14 App Router UI         │
+                   │  - Dark Slate Canvas (#0b0f19)            │
+                   │  - Metric Ribbon (NSS, Brand Health)      │
+                   │  - 5 Operational Tabs & Anomaly Alerts    │
+                   │  - 1-Click Evaluation Persona Switcher    │
                    └───────────────────────────────────────────┘
 ```
 
 ---
 
-## 🧠 Tiered AI Intelligence Funnel
+## Tiered intelligence funnel
 
-Social Insights splits intelligence workloads into four distinct tiers to optimize **accuracy, speed, cost, and reliability**:
+Social Insights divides intelligence processing into four sequential tiers to control operational costs and container memory:
 
-| Tier | Engine / Model | Execution Latency | Cost per 1K Mentions | Role & Responsibility |
+| Tier | Engine | Latency | Cost per 1K Mentions | Operational role |
 |---|---|---|---|---|
-| **Tier 0** | Regex, URL Canonicalizer, xxHash, LangDetect | `< 0.1 ms` | **$0.00** | Drops spam, eliminates near-duplicates, strips tracking parameters, and applies negative keyword filters. |
-| **Tier 1** | CardiffNLP RoBERTa + Sentence-Transformers MiniLM | `5 – 15 ms` | **$0.00** | High-throughput local CPU classification. Classifies sentiment (Positive, Neutral, Negative) and maps content into 8 canonical topic vectors. |
-| **Tier 2** | NVIDIA NIM API (`meta/llama-3.2-11b-vision-instruct` / `3.1-8b`) | `400 – 1200 ms` | `< $0.002` | Triggered only for high-level executive summaries and ambiguous classifications. Structured into 5 intelligence themes. |
-| **Tier 3** | Deterministic Aggregation Engine | `< 5 ms` | **$0.00** | Failsafe analytics engine that aggregates real-time metrics, top pain points, and praises without hallucinations if cloud APIs are offline. |
+| **Tier 0** | Lexical rule classifier, regex centroids, xxHash64, Jaccard 3-gram | `< 0.1 ms` | **$0.00** | Drops duplicates, strips tracking parameters, and assigns heuristic sentiment and topic tags with zero memory overhead. |
+| **Tier 1** | CardiffNLP RoBERTa and SentenceTransformers `all-MiniLM-L6-v2` | `5 to 15 ms` | **$0.00** | High-throughput local classification. Bypassed automatically when `LOW_MEMORY_MODE = true` to protect RAM limits. |
+| **Tier 2** | NVIDIA NIM API (`meta/llama-3.2-11b-vision-instruct` or compatible) | `400 to 1200 ms` | `< $0.002` | Generates executive summaries, pain point categorizations, and leadership takeaways over batches of verified mentions. |
+| **Tier 3** | Deterministic markdown template generator | `< 5 ms` | **$0.00** | Produces structured intelligence briefings directly from computed statistics when remote LLM keys are absent or rate-limited. |
 
 ---
 
-## 🔌 Supported Ingestion Connectors
+## Supported ingestion connectors
 
-Social Insights ships with **8 production-ready connectors**, each equipped with exponential backoff retries, rate-limiting handlers, and timeout guards:
+The platform includes seven concurrent ingestion connectors:
 
-| Connector | Mechanism | Default State | Authentication | Data Ingested |
-|---|---|---|---|---|
-| **Google News** | RSS Atom Feed Aggregator | Active | None (Public) | Global journalism, syndicated articles, press releases |
-| **Hacker News** | Algolia REST API | Active | None (Public) | Engineering sentiment, launch feedback, technical critique |
-| **Wikipedia** | MediaWiki REST Search API | Active | None (Public) | Encyclopedic updates, controversies, leadership changes |
-| **LinkedIn Pulse** | Curated RSS Syndication | Active | None (Public) | B2B commentary, corporate announcements, hiring feedback |
-| **GitHub** | REST API v3 (Discussions & Issues) | Active | None (Optional Token) | Developer bugs, feature requests, repository discussions |
-| **Stack Exchange** | REST API v2.3 | Active | None (Optional Key) | Technical troubleshooting, API complaints, developer sentiment |
-| **Reddit** | Public JSON & OAuth2 API | Active | Optional OAuth | Community feedback, unfiltered product reviews, niche discussions |
-| **YouTube** | YouTube Data API v3 | Active | Optional API Key | Video titles, creator reviews, tech teardowns |
+1. **Google News RSS**: Collects syndicated news articles and press releases through public XML feeds.
+2. **Hacker News**: Ingests technical critiques and product discussions using the Algolia search API.
+3. **Wikipedia**: Tracks encyclopedic revisions, executive changes, and controversy records through the MediaWiki API.
+4. **GitHub**: Collects issue reports and commit discussions using the GitHub REST API v3.
+5. **Stack Exchange**: Tracks technical troubleshooting patterns and developer inquiries via REST API v2.3.
+6. **Reddit**: Ingests public subreddit discussions and consumer feedback through public feeds or OAuth2.
+7. **YouTube**: Retrieves video titles, creator descriptions, and review content via YouTube Data API v3.
 
 ---
 
-## 🚀 Core Platform Capabilities
+## Data cleaning and normalization
 
-### 1. Brand Reputation Health Index (NPS Normalized)
-Aggregates mention sentiment into an industry-standard 0–100 index paired with the **Net Sentiment Score (NSS = %Positive − %Negative)**:
-- **0–20**: *Critical Friction* (Immediate intervention required)
-- **21–40**: *Vulnerable* (Elevated negative feedback)
-- **41–60**: *Balanced Neutral* (Equilibrium across mentions)
-- **61–80**: *Strong Affinity* (Healthy organic advocacy)
-- **81–100**: *High Advocacy* (Market-leading brand perception)
+Incoming mentions pass through a data cleaning pipeline before storage:
 
-### 2. Topic Velocity & Trend Acceleration Engine
-Continuously tracks topic volume shifts over a rolling 7-day sliding window. Detects accelerating themes (e.g., `+1450% velocity on customer support`) so product teams can intervene before a crisis escalates.
-
-### 3. Statistical Anomaly & Sentiment Spike Alerts
-Monitors a 14-day rolling baseline for each brand ($\mu$ and $\sigma$). Automatically triggers an **Urgent Anomaly Alert** when the negative sentiment ratio or volume diverges by more than **2 standard deviations ($2\sigma$)**.
-
-### 4. Multi-Brand Competitor Benchmarking
-Select any tracked brand to compare side-by-side:
-- Relative mention volume & Share of Voice (SOV %)
-- Cross-brand sentiment distribution
-- Clustered competitor complaint themes
-
-### 5. Quick Triage & Multi-Attribute Mentions Feed
-Full-text search with instant filter chips:
-- 🚨 **Urgent Negatives**: High-friction feedback requiring fast support response
-- ⭐ **High Praise**: Organic user testimonials and product wins
-- 🛠️ **Bugs & Issues**: Technical flaws, defects, and glitches
-- 💬 **Support Requests**: Onboarding, configuration, and troubleshooting inquiries
-- 💰 **Pricing & Billing**: Feedback regarding pricing tiers, subscription changes, and value
-
-### 6. Dynamic Keyword Management with Collision Defense
-Create brands with aliases, contextual disambiguation hints, and negative exclusion keywords. Deleting a brand executes an atomic cascade that purges all associated mentions, metrics, and cached summaries cleanly.
+1. **NFKC Unicode normalization**: Standardizes varied character encodings, accents, and punctuation.
+2. **URL parameter stripping**: Removes marketing tracking tokens (`utm_source`, `utm_medium`, `fbclid`, `gclid`) and hash fragments.
+3. **xxHash64 exact deduplication**: Generates 64-bit non-cryptographic hashes of normalized text to discard duplicate posts instantly.
+4. **Jaccard 3-gram text comparison**: Evaluates word 3-gram sets against recent collection windows with a 0.85 similarity threshold to drop syndicated copies.
+5. **Quality and spam filtering**: Rejects items shorter than 30 characters or containing promotional spam patterns.
 
 ---
 
-## 📊 Empirical AI Benchmarks
+## Role-based access control
 
-Evaluated against 100 hand-labeled social media benchmark samples ([`backend/eval/labelled_sample.jsonl`](backend/eval/labelled_sample.jsonl)):
+The application implements role-based access control (RBAC) across three distinct permission tiers:
 
-| Metric | Measured Score | Target Threshold | Status |
+1. **Administrator**: Full permissions, including brand deletion, system configuration, and data purging.
+2. **Market Analyst**: Data collection triggers, AI insight refresh operations, and anomaly alert resolution.
+3. **Executive Viewer**: Read-only access to dashboards, charts, and intelligence briefings. Mutation actions return HTTP 403 Forbidden.
+
+### Evaluation personas
+
+The login interface provides 1-click evaluation buttons that pre-seed credentials:
+- `admin@socialinsights.io` (Role: Admin)
+- `analyst@socialinsights.io` (Role: Analyst)
+- `viewer@socialinsights.io` (Role: Viewer)
+
+---
+
+## Frontend design system
+
+The frontend uses Next.js 14 App Router, Tailwind CSS, Lucide icons, and Recharts.
+
+### Design tokens
+
+- **Background**: Dark slate canvas (`#0b0f19`) with nested surface layers (`#111827`, `#1f2937`).
+- **Accents**: Electric indigo (`#6366f1`) for primary actions, emerald (`#10b981`) for positive sentiment, amber (`#f59e0b`) for neutral sentiment, and rose (`#f43f5e`) for negative sentiment.
+- **Borders and styling**: Subtle hairline borders (`border-white/10`) with backdrop blur (`backdrop-blur-md`).
+- **Typography**: Clean sans-serif hierarchy with monospace tabular figures for numeric metrics.
+
+### Dashboard layout
+
+1. **Top navigation**: Project brand, active tracked keyword selector, role switcher badge, and live database latency indicator.
+2. **Metric ribbon**: Displays Net Sentiment Score (-100 to +100), Brand Health Index (0 to 100), total mentions processed, and rejection rate.
+3. **Operational tabs**:
+   - **Overview**: Sentiment timelines, topic distributions, and source share donut charts with custom SVG tooltips.
+   - **Mentions feed**: Searchable table with filtering by sentiment, topic, source, and confidence status.
+   - **AI synthesis**: Structured executive takeaways, top pain points, and copyable markdown blocks.
+   - **Competitor benchmark**: Side-by-side volume and sentiment comparison between tracked brands.
+   - **System telemetry**: Container memory budget indicators, inference cost calculators, and connector health tables.
+4. **Anomaly banner**: Displays volume surges and sentiment drops exceeding 2 standard deviations, with acknowledgement controls.
+
+---
+
+## Empirical benchmarks
+
+Evaluated against 100 hand-labeled social media benchmark samples (`backend/eval/labelled_sample.jsonl`):
+
+| Metric | Measured value | Target threshold | Result |
 |---|---|---|---|
-| **Sentiment Classification Accuracy** | **85.00%** | > 75.0% | ✅ Exceeded (+10.0%) |
-| **Sentiment Macro F1-Score** | **0.8496** | > 0.70 | ✅ Exceeded (+0.15) |
-| **Topic Categorization Accuracy** | **75.00%** | > 70.0% | ✅ Exceeded (+5.0%) |
-| **Topic Macro F1-Score** | **0.7089** | > 0.65 | ✅ Exceeded (+0.06) |
-| **Sentiment Inference Speed** | **~1.9 items/sec** | CPU Batched | ✅ Verified |
-| **Topic Inference Speed** | **~7.5 items/sec** | CPU Batched | ✅ Verified |
-| **LLM Inference Share** | **< 5% of items** | Tier 2 Strict Budgeting | ✅ Cost Optimized |
-| **Automated Test Suite** | **69 / 69 passing** | 100% test pass rate | ✅ Verified |
+| **Sentiment classification accuracy** | **85.00%** | > 75.0% | Exceeded (+10.0%) |
+| **Sentiment macro F1-score** | **0.8496** | > 0.70 | Exceeded (+0.15) |
+| **Topic categorization accuracy** | **75.00%** | > 70.0% | Exceeded (+5.0%) |
+| **Topic macro F1-score** | **0.7089** | > 0.65 | Exceeded (+0.06) |
+| **Sentiment inference speed** | **~1.9 items/sec** | CPU Batched | Verified |
+| **Topic inference speed** | **~7.5 items/sec** | CPU Batched | Verified |
+| **Container memory in low memory mode** | **< 60 MB RAM** | < 512 MB | Verified |
+| **Automated test suite** | **78 / 78 passing** | 100% pass rate | Verified |
 
 ---
 
-## ⚡ Quickstart Guide (Local Development)
+## Local development setup
 
-### 1. Prerequisites
-- **Python**: 3.12+
-- **Node.js**: 18.x or 20.x+
-- **Git**
+### Prerequisites
 
-### 2. Backend Setup
+- Python 3.12+
+- Node.js 20+
+- Git
+
+### Backend configuration
+
 ```bash
 # Clone the repository
 git clone https://github.com/G-Narendra/Social-Insights.git
 cd Social-Insights
 
-# Create and activate Python virtual environment
+# Create and activate virtual environment
 python -m venv .venv
-# On Windows PowerShell:
+
+# PowerShell (Windows):
 .venv\Scripts\Activate.ps1
-# On Linux/macOS:
+# Bash (Linux/macOS):
 source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 
-# Copy environment configuration
+# Configure environment variables
 cp .env.example .env
 
 # Run database migrations
 alembic upgrade head
 
-# Start FastAPI backend (http://127.0.0.1:8000)
+# Launch FastAPI development server
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 3. Frontend Setup
-In a new terminal window:
+### Frontend configuration
+
 ```bash
+# In a separate terminal window
 cd Social-Insights/frontend
 
-# Install npm dependencies
+# Install dependencies
 npm install
 
-# Start development server (http://localhost:3000)
+# Start Next.js development server
 npm run dev
 ```
 
-Visit **[http://localhost:3000](http://localhost:3000)** in your browser!
+Open `http://localhost:3000` in your web browser.
 
 ---
 
-## 🐳 Docker & Containerized Deployment
+## Containerized deployment
 
-Run the complete multi-container production stack with a single command:
+Run the complete multi-container stack locally or on a production host:
 
 ```bash
-# 1. Prepare environment variables
+# Prepare environment variables
 cp .env.example .env
 
-# 2. Build and launch Backend + Frontend containers
+# Build and start services
 docker compose up -d --build
 
-# 3. Check health status
+# Verify container status
 docker compose ps
 curl -f http://localhost:8000/health
 ```
 
-### Optional Docker Profiles
+### Optional Docker profiles
+
 ```bash
-# Run with managed PostgreSQL 16
+# Launch with PostgreSQL 16 container
 docker compose --profile postgres up -d
 
-# Run with local Ollama offline LLM
+# Launch with local Ollama inference container
 docker compose --profile ollama up -d
 ```
 
 ---
 
-## 🌐 Production Deployment Guide
+## Production deployment guide
 
-Deploying Social Insights to production can be accomplished using either a **Modern PaaS Stack** (serverless frontend + managed backend) or a **Self-Hosted VPS** (Docker Compose + Reverse Proxy).
+### Pattern A: Modern PaaS (Render and Vercel)
 
----
+1. **Database**: Provision a serverless PostgreSQL instance on Neon or Supabase. Set `DATABASE_URL` with the `postgresql+asyncpg://` scheme.
+2. **Backend on Render**:
+   - Create a Web Service connected to the GitHub repository.
+   - Set Root Directory to `backend`.
+   - Set Docker build path to `Dockerfile`.
+   - Set environment variables:
+     - `APP_ENV=production`
+     - `DATABASE_URL=postgresql+asyncpg://user:password@host/database?ssl=require`
+     - `LOW_MEMORY_MODE=true`
+     - `TORCH_NUM_THREADS=1`
+     - `HF_HOME=/tmp/huggingface`
+     - `SENTENCE_TRANSFORMERS_HOME=/tmp/sbert`
+     - `INTERNAL_SECRET=your-random-secret-key`
+     - `CORS_ORIGINS=https://your-frontend.vercel.app`
+3. **Frontend on Vercel**:
+   - Import the repository and select `frontend` as the root directory.
+   - Set `NEXT_PUBLIC_API_URL` to your Render backend URL.
+   - Deploy.
 
-### Pattern A: Modern PaaS (Recommended)
+### Pattern B: Self-hosted VPS (Docker Compose and Caddy)
 
-This architecture provides high availability, automatic SSL, zero server maintenance, and generous free tiers.
-
-```
- [Users] ──── HTTPS ────► [Vercel: Next.js Frontend]
-                                │ (API Calls)
-                                ▼
- [Managed Postgres] ◄───► [Render / Railway / Fly.io: FastAPI Backend]
- (Neon / Supabase)              │
-                                ▼
-                     [NVIDIA NIM / Public APIs]
-```
-
-#### Step 1: Provision Managed Database (Neon or Supabase)
-1. Create a free account at [Neon.tech](https://neon.tech) or [Supabase.com](https://supabase.com).
-2. Create a new PostgreSQL database named `social_insights`.
-3. Copy your async connection string. It will look like:
-   ```env
-   DATABASE_URL=postgresql+asyncpg://user:password@ep-sample-123.region.neon.tech/social_insights?ssl=require
-   ```
-
-#### Step 2: Deploy Backend to Render, Railway, or Fly.io
-Here are the steps for **Render.com** (similar on Railway or Fly.io):
-1. Go to [Render Dashboard](https://dashboard.render.com/) -> **New +** -> **Web Service**.
-2. Connect your GitHub repository: `https://github.com/G-Narendra/Social-Insights`.
-3. Configure the service settings:
-   - **Root Directory**: `backend`
-   - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r ../requirements.txt && alembic -c ../alembic.ini upgrade head`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. In **Environment Variables**, add:
-   ```env
-   APP_ENV=production
-   DATABASE_URL=postgresql+asyncpg://user:password@ep-sample-123.region.neon.tech/social_insights?ssl=require
-   CORS_ORIGINS=https://your-frontend.vercel.app
-   INTERNAL_SECRET=generate-a-strong-random-uuid-here
-   NVIDIA_API_KEY=your_nvidia_api_key_optional
-   NVIDIA_MODEL=meta/llama-3.2-11b-vision-instruct
-   HF_HOME=/tmp/huggingface
-   SENTENCE_TRANSFORMERS_HOME=/tmp/sbert
-   ```
-5. Click **Create Web Service**. Note your backend URL (e.g., `https://social-insights-api.onrender.com`).
-
-#### Step 3: Deploy Frontend to Vercel
-1. Go to [Vercel Dashboard](https://vercel.com/) -> **Add New** -> **Project**.
-2. Import repository `G-Narendra/Social-Insights`.
-3. Configure Project:
-   - **Framework Preset**: `Next.js`
-   - **Root Directory**: Select `frontend`
-4. Add Environment Variable:
-   ```env
-   NEXT_PUBLIC_API_URL=https://social-insights-api.onrender.com
-   ```
-5. Click **Deploy**. Your dashboard is now live with global edge CDN and automatic SSL!
+1. Provision an Ubuntu 22.04 or 24.04 LTS server.
+2. Install Docker, Docker Compose, and Caddy.
+3. Clone the repository and configure `.env`.
+4. Run `docker compose up -d --build`.
+5. Point Caddy to `localhost:3000` for frontend traffic and `localhost:8000` for `/api/*` and `/health`.
 
 ---
 
-### Pattern B: Self-Hosted VPS (Single Box)
+## Environment configuration matrix
 
-For full data sovereignty and $0 recurring cloud software costs, deploy to a $6–$12/month VPS (DigitalOcean Droplet, Hetzner Cloud, Linode, or AWS EC2) running Ubuntu 22.04/24.04 LTS.
-
-#### Step 1: VPS Initial Provisioning
-```bash
-# SSH into your server
-ssh root@your-server-ip
-
-# Update packages and install Docker + Docker Compose + Caddy
-apt update && apt upgrade -y
-apt install -y git curl docker.io docker-compose-plugin caddy
-systemctl enable --now docker
-```
-
-#### Step 2: Clone and Configure
-```bash
-cd /opt
-git clone https://github.com/G-Narendra/Social-Insights.git
-cd Social-Insights
-
-# Generate environment configuration
-cp .env.example .env
-nano .env
-```
-Update your `.env` with:
-```env
-APP_ENV=production
-DATABASE_URL=sqlite+aiosqlite:////app/data/social_insights.db
-CORS_ORIGINS=https://insights.yourdomain.com
-INTERNAL_SECRET=replace_with_strong_secret_key
-NVIDIA_API_KEY=your_nvidia_key_if_available
-```
-
-#### Step 3: Launch Containers
-```bash
-docker compose up -d --build
-```
-
-#### Step 4: Configure Automatic HTTPS with Caddy
-Edit `/etc/caddy/Caddyfile`:
-```caddy
-insights.yourdomain.com {
-    # Reverse proxy Next.js frontend
-    reverse_proxy localhost:3000
-
-    # Reverse proxy backend API endpoints
-    handle /api/* {
-        reverse_proxy localhost:8000
-    }
-    handle /health {
-        reverse_proxy localhost:8000
-    }
-    handle /docs {
-        reverse_proxy localhost:8000
-    }
-    handle /openapi.json {
-        reverse_proxy localhost:8000
-    }
-}
-```
-Reload Caddy:
-```bash
-systemctl reload caddy
-```
-Caddy will automatically request and renew a free Let's Encrypt SSL certificate for `insights.yourdomain.com`.
-
----
-
-## ⚙️ Environment Configuration Matrix
-
-| Variable | Description | Default | Required? |
+| Variable | Description | Default | Required |
 |---|---|---|---|
 | `APP_ENV` | Application environment (`development`, `production`, `test`) | `development` | Yes |
 | `DATABASE_URL` | SQLAlchemy async connection URI (`sqlite+aiosqlite` or `postgresql+asyncpg`) | `sqlite+aiosqlite:///./social_insights.db` | Yes |
+| `LOW_MEMORY_MODE` | Disables heavy local model weights to stay under 512 MB RAM | `true` | Yes |
+| `TORCH_NUM_THREADS` | Number of CPU threads allocated to PyTorch | `1` | Optional |
 | `CORS_ORIGINS` | Comma-separated allowed CORS origins | `http://localhost:3000,http://127.0.0.1:3000` | Yes |
-| `INTERNAL_SECRET` | Secret token to authenticate internal background cron jobs (`/internal/ingest`) | `dev-internal-secret` | Yes |
-| `NEXT_PUBLIC_API_URL` | Frontend URL to route API calls to the backend | `http://127.0.0.1:8000` (or relative `""`) | Optional |
-| `NVIDIA_API_KEY` | NVIDIA NIM API token for Tier 2 LLM synthesis ([Get Key](https://build.nvidia.com)) | `""` | Optional |
+| `INTERNAL_SECRET` | Secret token to authenticate background cron jobs | `dev-internal-secret` | Yes |
+| `NEXT_PUBLIC_API_URL` | Frontend URL to route API requests to the backend | `http://127.0.0.1:8000` | Optional |
+| `NVIDIA_API_KEY` | NVIDIA NIM API token for Tier 2 LLM synthesis | `""` | Optional |
 | `NVIDIA_MODEL` | LLM model identifier | `meta/llama-3.2-11b-vision-instruct` | Optional |
-| `REDDIT_CLIENT_ID` | Reddit App Client ID for authenticated Reddit ingestion | `""` | Optional |
-| `REDDIT_CLIENT_SECRET` | Reddit App Client Secret | `""` | Optional |
+| `REDDIT_CLIENT_ID` | Client ID for authenticated Reddit ingestion | `""` | Optional |
+| `REDDIT_CLIENT_SECRET` | Client Secret for authenticated Reddit ingestion | `""` | Optional |
 | `YOUTUBE_API_KEY` | Google Cloud API key with YouTube Data API v3 enabled | `""` | Optional |
-| `HF_HOME` | Cache directory for local Hugging Face transformer models | `./.cache/huggingface` | Optional |
-| `SENTENCE_TRANSFORMERS_HOME` | Cache directory for SBERT embedding models | `./.cache/sbert` | Optional |
-| `TORCH_NUM_THREADS` | Number of CPU threads allocated to PyTorch local neural inference | `2` | Optional |
 
 ---
 
-## 📡 REST API Reference
+## REST API reference
 
-Automated interactive OpenAPI / Swagger documentation is available at `/docs` on any running backend instance.
+OpenAPI interactive documentation is accessible at `/docs` on running backend instances.
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/health` | Liveness health check |
-| `GET` | `/ready` | Database readiness check & migration status |
-| `GET` | `/api/keywords` | List all tracked brands/keywords with mention counts |
-| `POST` | `/api/keywords` | Register a new brand with aliases, context hint, and negative keywords |
-| `DELETE` | `/api/keywords/{id}` | Atomic purge of brand, mentions, alerts, and summaries |
-| `POST` | `/api/collect` | Trigger asynchronous ingestion pipeline across all connectors |
-| `GET` | `/api/runs/{id}` | Poll ingestion run status, items collected, and dropped count |
-| `GET` | `/api/mentions` | Query mentions with full-text search, topic, sentiment, and triage filters |
-| `GET` | `/api/stats/overview` | Executive KPI summary (sentiment share, top topics, dropped audit count) |
-| `GET` | `/api/stats/timeseries` | Chronological mention volume and sentiment time series |
-| `GET` | `/api/insights/summary` | Retrieve cached executive intelligence cards |
-| `POST` | `/api/insights/summary/refresh` | Force AI executive summary re-synthesis (rate limited) |
-| `GET` | `/api/insights/trends` | Topic velocity and acceleration metrics |
-| `GET` | `/api/compare` | Multi-brand competitor comparison and complaint themes |
-| `GET` | `/api/alerts` | Statistical anomaly and sentiment spike history |
-| `POST` | `/internal/ingest` | Automated cron ingestion trigger (Protected by `X-Internal-Secret`) |
-
----
-
-## 🔒 Security & Prompt Injection Hardening
-
-- **Prompt Injection Defense**: Ingested social media text is never interpolated into LLM prompts as raw instructions. Content is isolated inside strictly bounded XML envelopes (`<mentions_data>`) with system prompt constraints prohibiting the execution of user instructions found in posts.
-- **Pydantic Validation**: All API payloads and LLM responses are parsed and validated through strict Pydantic v2 schemas.
-- **Non-Privileged Containers**: Production Docker images execute under unprivileged service users (`appuser:1001` and `nextjs:1001`).
-- **Secret Sanitization**: Automated `.gitignore` rules prevent SQLite databases, `.env` files, model weights, and temporary scratch files from being committed.
+| Method | Endpoint | Description | Permission |
+|---|---|---|---|
+| `GET` | `/health` | Liveness health probe | Public |
+| `GET` | `/ready` | Database readiness and migration status | Public |
+| `POST` | `/api/auth/signup` | Create user account with validated email and password | Public |
+| `POST` | `/api/auth/login` | Authenticate existing user and issue JWT bearer token | Public |
+| `POST` | `/api/auth/demo-login` | 1-click evaluation login for Admin, Analyst, or Viewer | Public |
+| `GET` | `/api/auth/me` | Return authenticated user identity and role | Authenticated |
+| `GET` | `/api/keywords` | List all tracked keywords with mention tallies | Viewer+ |
+| `POST` | `/api/keywords` | Register new keyword with aliases and context hints | Analyst+ |
+| `DELETE` | `/api/keywords/{id}` | Purge brand, mentions, alerts, and summaries | Admin |
+| `POST` | `/api/collect` | Trigger asynchronous ingestion pipeline | Analyst+ |
+| `GET` | `/api/runs/{id}` | Poll ingestion run status and progress metrics | Viewer+ |
+| `GET` | `/api/mentions` | Query mentions with full-text search and filters | Viewer+ |
+| `GET` | `/api/stats/overview` | Executive KPI summary and quality drop counts | Viewer+ |
+| `GET` | `/api/stats/timeseries` | Chronological mention volume and sentiment buckets | Viewer+ |
+| `GET` | `/api/insights/summary` | Retrieve cached executive intelligence cards | Viewer+ |
+| `POST` | `/api/insights/summary/refresh` | Force AI executive summary regeneration | Analyst+ |
+| `GET` | `/api/insights/trends` | Topic velocity and acceleration metrics | Viewer+ |
+| `GET` | `/api/compare` | Multi-brand comparison and complaint themes | Viewer+ |
+| `GET` | `/api/alerts` | Statistical anomaly and volume surge records | Viewer+ |
+| `POST` | `/internal/ingest` | Background cron ingestion trigger (`X-Internal-Secret`) | Internal |
 
 ---
 
-## 🧪 Testing & Quality Assurance
+## Security architecture
 
-Social Insights includes a thorough automated test suite covering unit logic, neural ML models, ingestion connectors, and full API integration:
+1. **Authentication**: Uses standard library PBKDF2-HMAC-SHA256 password hashing with 100,000 iterations and RFC 7519 compliant HS256 JWT tokens.
+2. **Prompt injection isolation**: Ingested social media text is enclosed within XML tags (`<mentions_data>`) with system instructions forbidding execution of user instructions found within raw posts.
+3. **Input validation**: All payloads and responses are validated through Pydantic v2 schemas.
+4. **Least privilege containers**: Docker images run under non-root users (`appuser:1001` and `nextjs:1001`).
+
+---
+
+## Testing and verification
+
+Run the automated test suite locally:
 
 ```bash
-# 1. Run all 69 backend unit and integration tests
+# Execute backend test suite (78 tests)
 pytest backend/tests/ -v
 
-# 2. Run Ruff code quality and format inspection
+# Verify code formatting and linting
 ruff check backend/
 ruff format --check backend/
 
-# 3. Validate Frontend Next.js production build
+# Compile frontend production build
 cd frontend && npm run build
 ```
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the **MIT License**. See the [`LICENSE`](LICENSE) file for complete details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for terms.

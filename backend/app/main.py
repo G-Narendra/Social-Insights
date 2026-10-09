@@ -98,7 +98,7 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # CORS — allow explicit list plus standard Vercel and Render deployments
+    # CORS: allow explicit list plus standard Vercel and Render deployments
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
@@ -108,7 +108,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # HTTPException handler — consistent {error: {code, message}} format
+    # HTTPException handler: consistent error response schema
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
         code = "error"
@@ -121,7 +121,7 @@ def create_app() -> FastAPI:
             content={"error": {"code": code, "message": message}},
         )
 
-    # Validation error handler — consistent format for invalid client input (HTTP 422)
+    # Validation error handler: format invalid client input
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
@@ -133,14 +133,14 @@ def create_app() -> FastAPI:
             content={"error": {"code": "validation_error", "message": err_msg}},
         )
 
-    # Global unhandled exception handler — never leak stack traces
+    # Global unhandled exception handler: redact internal traces
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled error on %s %s", request.method, request.url.path)
         return JSONResponse(
             status_code=500,
             content={
-                "error": {"code": "internal_error", "message": "An unexpected error occurred"}
+                "error": {"code": "internal_error", "message": "Internal server error encountered"}
             },
         )
 
@@ -162,10 +162,10 @@ def create_app() -> FastAPI:
         """Basic liveness check."""
         return {"status": "ok"}
 
-    # Readiness check — verifies database connectivity
+    # Readiness check: verifies database connectivity
     @app.get("/ready", tags=["health"])
     async def ready() -> dict[str, str]:
-        """Readiness check — verifies DB connectivity."""
+        """Readiness check: verifies database connectivity."""
         try:
             factory = get_session_factory()
             async with factory() as session:

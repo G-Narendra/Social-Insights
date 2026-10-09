@@ -10,6 +10,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        canvas: {
+          dark: "#0b0f19",
+        },
+        surface: {
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          layer1: "#111827",
+          layer2: "#1f2937",
+          layer3: "#374151",
+          800: "#1e293b",
+          900: "#0f172a",
+          950: "#020617",
+        },
+        accent: {
+          indigo: "#6366f1",
+          emerald: "#10b981",
+          amber: "#f59e0b",
+          rose: "#f43f5e",
+        },
         brand: {
           50: "#eef2ff",
           100: "#e0e7ff",
@@ -23,21 +42,15 @@ const config: Config = {
           900: "#312e81",
           950: "#1e1b4b",
         },
-        surface: {
-          50: "#f8fafc",
-          100: "#f1f5f9",
-          800: "#1e293b",
-          900: "#0f172a",
-          950: "#020617",
-        },
         sentiment: {
-          pos: "#10b981", // emerald
-          neu: "#64748b", // slate
-          neg: "#f43f5e", // rose
+          pos: "#10b981",
+          neu: "#f59e0b",
+          neg: "#f43f5e",
         },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "Plus Jakarta Sans", "system-ui", "sans-serif"],
+        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
       },
     },
   },

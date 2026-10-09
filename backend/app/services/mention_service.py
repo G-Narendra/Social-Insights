@@ -202,4 +202,3 @@ async def bulk_update_mention_enrichments(
                 mention.embedding = item["embedding"]
             mention.status = "done"
     await session.commit()
-

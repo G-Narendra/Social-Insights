@@ -24,6 +24,11 @@ import {
   Zap,
 } from "lucide-react";
 import { OverviewStats, TimeSeriesResponse } from "@/lib/types";
+import {
+  SentimentTimelineChart,
+  TopicDistributionChart,
+  SourceShareChart,
+} from "@/components/OverviewCharts";
 
 interface OverviewTabProps {
   stats: OverviewStats | null;
@@ -240,15 +245,15 @@ export function OverviewTab({
       {/* 4 Primary KPI Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Mentions */}
-        <div className="glass-card rounded-2xl p-5 relative overflow-hidden">
+        <div className="bg-[#111827] border border-white/10 rounded-2xl p-5 relative overflow-hidden backdrop-blur-md">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">Total Mentions</span>
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
+            <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
               <MessageSquare className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-white">
+            <span className="text-3xl font-bold tracking-tight text-white font-mono tabular-nums">
               {total_mentions.toLocaleString()}
             </span>
           </div>
@@ -259,20 +264,20 @@ export function OverviewTab({
         </div>
 
         {/* Positive Sentiment */}
-        <div className="glass-card rounded-2xl p-5 relative overflow-hidden">
+        <div className="bg-[#111827] border border-white/10 rounded-2xl p-5 relative overflow-hidden backdrop-blur-md">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">Positive Sentiment</span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
               <TrendingUp className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-emerald-400">
+            <span className="text-3xl font-bold tracking-tight text-emerald-400 font-mono tabular-nums">
               {posPct.toFixed(1)}%
             </span>
             <span className="text-xs text-slate-400">({safeSentiment.positive} items)</span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 mt-3 overflow-hidden">
+          <div className="w-full bg-[#1f2937] rounded-full h-1.5 mt-3 overflow-hidden">
             <div
               className="bg-emerald-500 h-1.5 rounded-full"
               style={{ width: `${Math.min(100, posPct)}%` }}
@@ -281,42 +286,42 @@ export function OverviewTab({
         </div>
 
         {/* Neutral Sentiment */}
-        <div className="glass-card rounded-2xl p-5 relative overflow-hidden">
+        <div className="bg-[#111827] border border-white/10 rounded-2xl p-5 relative overflow-hidden backdrop-blur-md">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">Neutral Sentiment</span>
-            <div className="p-2 rounded-xl bg-slate-500/10 text-slate-300">
+            <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
               <BarChart2 className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-slate-200">
+            <span className="text-3xl font-bold tracking-tight text-amber-400 font-mono tabular-nums">
               {neuPct.toFixed(1)}%
             </span>
             <span className="text-xs text-slate-400">({safeSentiment.neutral} items)</span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 mt-3 overflow-hidden">
+          <div className="w-full bg-[#1f2937] rounded-full h-1.5 mt-3 overflow-hidden">
             <div
-              className="bg-slate-400 h-1.5 rounded-full"
+              className="bg-amber-500 h-1.5 rounded-full"
               style={{ width: `${Math.min(100, neuPct)}%` }}
             />
           </div>
         </div>
 
         {/* Negative Sentiment */}
-        <div className="glass-card rounded-2xl p-5 relative overflow-hidden">
+        <div className="bg-[#111827] border border-white/10 rounded-2xl p-5 relative overflow-hidden backdrop-blur-md">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">Negative Sentiment</span>
-            <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400">
+            <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
               <TrendingDown className="h-4 w-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-rose-400">
+            <span className="text-3xl font-bold tracking-tight text-rose-400 font-mono tabular-nums">
               {negPct.toFixed(1)}%
             </span>
             <span className="text-xs text-slate-400">({safeSentiment.negative} items)</span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 mt-3 overflow-hidden">
+          <div className="w-full bg-[#1f2937] rounded-full h-1.5 mt-3 overflow-hidden">
             <div
               className="bg-rose-500 h-1.5 rounded-full"
               style={{ width: `${Math.min(100, negPct)}%` }}
@@ -326,7 +331,7 @@ export function OverviewTab({
       </div>
 
       {/* Brand Reputation Health Index Card */}
-      <div className="glass-card rounded-2xl p-6 relative overflow-hidden border border-slate-700/80 bg-gradient-to-r from-slate-900 via-indigo-950/20 to-slate-900 shadow-xl">
+      <div className="bg-[#111827] border border-white/10 rounded-2xl p-6 relative overflow-hidden backdrop-blur-md shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -348,7 +353,7 @@ export function OverviewTab({
             {/* Health Score Gauge */}
             <div className="flex flex-col items-center">
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-white font-mono">{healthScore}</span>
+                <span className="text-4xl font-extrabold text-white font-mono tabular-nums">{healthScore}</span>
                 <span className="text-xs text-slate-400 font-semibold">/100</span>
               </div>
               <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
@@ -356,14 +361,18 @@ export function OverviewTab({
               </span>
             </div>
 
-            <div className="h-10 w-px bg-slate-800" />
+            <div className="h-10 w-px bg-white/10" />
 
             {/* Net Sentiment Score */}
             <div className="flex flex-col items-center">
               <div className="flex items-baseline gap-1">
                 <span
-                  className={`text-4xl font-extrabold font-mono ${
-                    netSentimentScore >= 0 ? "text-emerald-400" : "text-rose-400"
+                  className={`text-4xl font-extrabold font-mono tabular-nums ${
+                    netSentimentScore > 20
+                      ? "text-emerald-400"
+                      : netSentimentScore < -20
+                      ? "text-rose-400"
+                      : "text-amber-400"
                   }`}
                 >
                   {netSentimentScore >= 0 ? `+${netSentimentScore}` : netSentimentScore}
@@ -378,16 +387,16 @@ export function OverviewTab({
         </div>
 
         {/* Progress Spectrum Bar */}
-        <div className="mt-4 pt-3 border-t border-slate-800/80">
+        <div className="mt-4 pt-3 border-t border-white/10">
           <div className="flex justify-between text-[11px] text-slate-400 mb-1.5 font-mono">
             <span>Critical Friction (0)</span>
             <span>Balanced Neutral (50)</span>
             <span>High Advocacy (100)</span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden flex shadow-inner">
+          <div className="w-full bg-[#1f2937] rounded-full h-2 overflow-hidden flex shadow-inner">
             <div
               className={`h-full transition-all duration-700 ${
-                healthScore >= 60 ? "bg-emerald-500" : healthScore >= 45 ? "bg-indigo-500" : "bg-rose-500"
+                healthScore >= 60 ? "bg-emerald-500" : healthScore >= 45 ? "bg-amber-500" : "bg-rose-500"
               }`}
               style={{ width: `${healthScore}%` }}
             />
@@ -395,152 +404,63 @@ export function OverviewTab({
         </div>
       </div>
 
-      {/* Main Charts & Visualizations */}
+      {/* Main Charts and Visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Mentions Timeline / Volume */}
-        <div className="glass-card rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-[#111827] border border-white/10 rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
             <div>
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-indigo-400" />
-                Mentions Over Time
+                Sentiment Velocity & Volume Trends
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">Chronological mention volume & sentiment mix</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Chronological mention distribution partitioned by sentiment class
+              </p>
             </div>
           </div>
 
-          {/* Timeline visualization */}
-          {timeseries && timeseries.buckets.length > 0 ? (
-            <div className="space-y-3 my-2">
-              <div className="h-44 flex items-end gap-2 pt-6 pb-2 border-b border-slate-800/80">
-                {timeseries.buckets.map((b, idx) => {
-                  const maxCount = Math.max(...timeseries.buckets.map((x) => x.total), 1);
-                  const heightPct = Math.max(12, Math.round((b.total / maxCount) * 100));
-                  return (
-                    <div
-                      key={idx}
-                      className="flex-1 flex flex-col items-center gap-1 group relative h-full justify-end"
-                    >
-                      {/* Tooltip on hover */}
-                      <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-slate-900 border border-slate-700 px-2 py-1 rounded text-[10px] text-white whitespace-nowrap z-20 shadow-xl">
-                        <div className="font-semibold">{b.timestamp}</div>
-                        <div>Total: {b.total} (Pos: {b.positive}, Neu: {b.neutral}, Neg: {b.negative})</div>
-                      </div>
+          <SentimentTimelineChart timeseries={timeseries} />
 
-                      {/* Stacked bar */}
-                      <div
-                        className="w-full rounded-t-md overflow-hidden flex flex-col-reverse transition-all group-hover:brightness-125"
-                        style={{ height: `${heightPct}%` }}
-                      >
-                        <div
-                          className="bg-emerald-500 w-full"
-                          style={{ height: `${(b.positive / (b.total || 1)) * 100}%` }}
-                        />
-                        <div
-                          className="bg-slate-500 w-full"
-                          style={{ height: `${(b.neutral / (b.total || 1)) * 100}%` }}
-                        />
-                        <div
-                          className="bg-rose-500 w-full"
-                          style={{ height: `${(b.negative / (b.total || 1)) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Bucket Labels */}
-              <div className="flex justify-between text-[10px] text-slate-400 px-1">
-                <span>{timeseries.buckets[0]?.timestamp}</span>
-                {timeseries.buckets.length > 2 && (
-                  <span>{timeseries.buckets[Math.floor(timeseries.buckets.length / 2)]?.timestamp}</span>
-                )}
-                <span>{timeseries.buckets[timeseries.buckets.length - 1]?.timestamp}</span>
-              </div>
-
-              {/* Legend */}
-              <div className="flex items-center justify-center gap-5 text-xs text-slate-400 pt-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <span>Positive</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-slate-400" />
-                  <span>Neutral</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-rose-400" />
-                  <span>Negative</span>
-                </div>
-              </div>
+          {/* Legend */}
+          <div className="flex items-center justify-center gap-6 text-xs text-slate-400 pt-3 border-t border-white/5">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span>Positive</span>
             </div>
-          ) : (
-            <div className="py-12 text-center text-xs text-slate-400">
-              Not enough chronological buckets yet.
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              <span>Neutral</span>
             </div>
-          )}
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-rose-400" />
+              <span>Negative</span>
+            </div>
+          </div>
         </div>
 
-        {/* Top Topics Distribution */}
-        <div className="glass-card rounded-2xl p-6 flex flex-col justify-between">
+        {/* Source Share Donut Chart */}
+        <div className="bg-[#111827] border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-1">
-              <BarChart2 className="h-4 w-4 text-violet-400" />
-              Topic Categorization
-            </h3>
-            <p className="text-xs text-slate-400 mb-4">Semantic clustering via MiniLM embeddings</p>
-
-            <div className="space-y-3">
-              {top_topics.slice(0, 6).map((item, idx) => {
-                const label = TOPIC_LABELS[item.topic] || item.topic;
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      if (onSelectFilter) {
-                        onSelectFilter({ topic: item.topic });
-                      } else {
-                        onSelectSearchTerm?.(item.topic);
-                      }
-                    }}
-                    title={`Click to filter mentions by topic: ${label}`}
-                    className="w-full text-left space-y-1 group hover:bg-slate-800/60 p-1.5 rounded-xl transition-all cursor-pointer block"
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-300 group-hover:text-indigo-300 font-medium truncate max-w-[170px] transition-colors">
-                        {label}
-                      </span>
-                      <span className="text-slate-400 font-mono text-[11px]">
-                        {item.count} ({item.percentage}%)
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="bg-gradient-to-r from-indigo-500 to-violet-500 h-1.5 rounded-full group-hover:from-indigo-400 group-hover:to-violet-400 transition-all"
-                        style={{ width: `${Math.min(100, item.percentage)}%` }}
-                      />
-                    </div>
-                  </button>
-                );
-              })}
-              {top_topics.length === 0 && (
-                <p className="text-xs text-slate-400 py-6 text-center">No topic data available</p>
-              )}
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <Database className="h-4 w-4 text-sky-400" />
+                Source Distribution Share
+              </h3>
             </div>
+            <p className="text-xs text-slate-400 mb-2">
+              Mention partition by public ingestion endpoint
+            </p>
+
+            <SourceShareChart sources={sources} />
           </div>
 
-          {/* Sources breakdown badge row */}
-          <div className="pt-4 border-t border-slate-800/80 mt-4">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
-              Ingested Sources
-            </span>
-            <div className="flex flex-wrap gap-1.5">
+          <div className="pt-3 border-t border-white/5">
+            <div className="flex flex-wrap gap-1.5 justify-center">
               {Object.entries(sources).map(([src, cnt]) => (
                 <span
                   key={src}
-                  className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/60 rounded-md text-[11px] text-slate-300"
+                  className="px-2 py-0.5 bg-slate-800/80 border border-white/10 rounded-md text-[10px] text-slate-300 font-mono"
                 >
                   {src}: <strong className="text-white">{cnt}</strong>
                 </span>
@@ -550,9 +470,38 @@ export function OverviewTab({
         </div>
       </div>
 
+      {/* Topic Categorization Bar Chart */}
+      <div className="bg-[#111827] border border-white/10 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              <BarChart2 className="h-4 w-4 text-violet-400" />
+              Semantic Topic Classification Breakdown
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Topic centroid clustering with fast keyword boost arbitration
+            </p>
+          </div>
+          <span className="text-[11px] text-slate-400 font-mono">
+            {top_topics.length} topics identified
+          </span>
+        </div>
+
+        <TopicDistributionChart
+          topTopics={top_topics}
+          onSelectTopic={(topic) => {
+            if (onSelectFilter) {
+              onSelectFilter({ topic });
+            } else {
+              onSelectSearchTerm?.(topic);
+            }
+          }}
+        />
+      </div>
+
       {/* Voice of Customer (VoC) Interactive Buzzword Cloud */}
-      <div className="glass-card rounded-2xl p-6 border border-slate-800/80">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800/80">
+      <div className="bg-[#111827] border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-white/10">
           <div>
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-400" />
@@ -629,8 +578,8 @@ export function OverviewTab({
       </div>
 
       {/* Data Quality & Pipeline Audit Summary */}
-      <div className="glass-card rounded-2xl p-6 border-slate-800/80">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+      <div className="bg-[#111827] border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
           <div>
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
@@ -663,7 +612,7 @@ export function OverviewTab({
             {Object.entries(quality.drop_reasons).map(([reason, count]) => (
               <div
                 key={reason}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-900/90 border border-slate-800 text-xs text-slate-300"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#1f2937] border border-white/10 text-xs text-slate-300"
               >
                 <span className="text-rose-400 font-mono font-bold">{count}</span>
                 <span className="text-slate-400">dropped:</span>

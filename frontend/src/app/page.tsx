@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Navbar } from "@/components/Navbar";
-import { OverviewTab } from "@/components/OverviewTab";
 import { TrendsAlertsBanner } from "@/components/TrendsAlertsBanner";
 import {
   AlertItem,
@@ -26,7 +25,26 @@ import {
 } from "@/lib/types";
 import { api } from "@/lib/api";
 
-// Dynamically code-split non-critical tabs and modals for lightning-fast initial load
+// Dynamically code-split tabs and Recharts for fast initial page compilation
+const OverviewTab = dynamic(
+  () => import("@/components/OverviewTab").then((mod) => mod.OverviewTab),
+  {
+    loading: () => (
+      <div className="space-y-6 animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 bg-[#111827] rounded-2xl border border-white/10" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="h-72 bg-[#111827] rounded-2xl border border-white/10 lg:col-span-2" />
+          <div className="h-72 bg-[#111827] rounded-2xl border border-white/10" />
+        </div>
+      </div>
+    ),
+  }
+);
+
 const MentionsTab = dynamic(
   () => import("@/components/MentionsTab").then((mod) => mod.MentionsTab),
   {
@@ -80,9 +98,50 @@ const CollectionModal = dynamic(
   { ssr: false }
 );
 
-type ActiveTab = "overview" | "mentions" | "insights" | "compare";
+const SystemTelemetryTab = dynamic(
+  () => import("@/components/SystemTelemetryTab").then((mod) => mod.SystemTelemetryTab),
+  {
+    loading: () => (
+      <div className="space-y-4 py-8 animate-pulse">
+        <div className="h-28 bg-[#111827] rounded-2xl border border-white/10" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-44 bg-[#111827] rounded-2xl border border-white/10" />
+          ))}
+        </div>
+      </div>
+    ),
+  }
+);
+
+import { MetricRibbon } from "@/components/MetricRibbon";
+import { useAuth } from "@/context/AuthContext";
+import { LoginPortal } from "@/components/LoginPortal";
+
+type ActiveTab = "overview" | "mentions" | "insights" | "compare" | "telemetry";
 
 export default function DashboardPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+          <span className="text-xs font-mono text-slate-400">Verifying session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPortal />;
+  }
+
+  return <AuthenticatedDashboard />;
+}
+
+function AuthenticatedDashboard() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [activeKeyword, setActiveKeyword] = useState<string>("");
@@ -113,7 +172,7 @@ export default function DashboardPage() {
   // Modal State
   const [isCollectModalOpen, setIsCollectModalOpen] = useState(false);
 
-  // 1. Initial Load: Fetch tracked keywords
+  // 1. Initial Load: Fetch tracked keywords when authenticated
   const loadKeywords = async () => {
     try {
       const kws = await api.getKeywords();
@@ -324,6 +383,7 @@ export default function DashboardPage() {
       else if (e.key === "2") setActiveTab("mentions");
       else if (e.key === "3") setActiveTab("insights");
       else if (e.key === "4") setActiveTab("compare");
+      else if (e.key === "5") setActiveTab("telemetry");
       else if (e.key.toLowerCase() === "c") {
         e.preventDefault();
         setIsCollectModalOpen(true);
@@ -337,7 +397,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[#0b0f19]">
       {/* Top Navbar */}
       <Navbar
         keywords={keywords}
@@ -357,13 +417,16 @@ export default function DashboardPage() {
           onSimulateAlert={handleSimulateAlert}
         />
 
-        {/* Tab Navigation Navigation Bar */}
-        <div className="flex items-center justify-between border-b border-slate-800/80 mb-6 pb-2">
-          <div className="flex items-center gap-1 sm:gap-2">
+        {/* Metric Ribbon */}
+        <MetricRibbon stats={stats} loading={loadingStats} />
+
+        {/* Tab Navigation Bar */}
+        <div className="flex items-center justify-between border-b border-white/10 mb-6 pb-2">
+          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-1">
             {/* Overview */}
             <button
               onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
                 activeTab === "overview"
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
@@ -373,10 +436,10 @@ export default function DashboardPage() {
               <span>Overview</span>
             </button>
 
-            {/* Mentions */}
+            {/* Mentions Feed */}
             <button
               onClick={() => setActiveTab("mentions")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
                 activeTab === "mentions"
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
@@ -386,8 +449,10 @@ export default function DashboardPage() {
               <span>Mentions Feed</span>
               {stats?.total_mentions ? (
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    activeTab === "mentions" ? "bg-indigo-700 text-white" : "bg-slate-800 text-slate-400"
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+                    activeTab === "mentions"
+                      ? "bg-indigo-700 text-white"
+                      : "bg-slate-800 text-slate-400"
                   }`}
                 >
                   {stats.total_mentions}
@@ -395,31 +460,44 @@ export default function DashboardPage() {
               ) : null}
             </button>
 
-            {/* AI Summary & Intelligence */}
+            {/* AI Synthesis */}
             <button
               onClick={() => setActiveTab("insights")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
                 activeTab === "insights"
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
               }`}
             >
               <Bot className="h-4 w-4" />
-              <span>AI Insights</span>
+              <span>AI Synthesis</span>
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-ping" />
             </button>
 
             {/* Competitor Benchmark */}
             <button
               onClick={() => setActiveTab("compare")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
                 activeTab === "compare"
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
               }`}
             >
               <GitCompare className="h-4 w-4" />
-              <span>Compare Brands</span>
+              <span>Competitor Benchmark</span>
+            </button>
+
+            {/* System Telemetry */}
+            <button
+              onClick={() => setActiveTab("telemetry")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                activeTab === "telemetry"
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+              }`}
+            >
+              <Layers className="h-4 w-4" />
+              <span>System Telemetry</span>
             </button>
           </div>
 
@@ -430,9 +508,11 @@ export default function DashboardPage() {
               loadMentions(activeKeyword);
             }}
             title="Refresh metrics"
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors shrink-0"
           >
-            <RefreshCw className={`h-4 w-4 ${loadingStats ? "animate-spin text-indigo-400" : ""}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${loadingStats ? "animate-spin text-indigo-400" : ""}`}
+            />
           </button>
         </div>
 
@@ -471,6 +551,13 @@ export default function DashboardPage() {
           <CompareTab
             initialKeyword={activeKeyword}
             availableKeywords={keywords.map((k) => k.term)}
+          />
+        )}
+
+        {activeTab === "telemetry" && (
+          <SystemTelemetryTab
+            stats={stats}
+            activeKeyword={activeKeyword}
           />
         )}
       </main>

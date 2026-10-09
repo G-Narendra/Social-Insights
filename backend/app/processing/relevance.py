@@ -139,7 +139,7 @@ def _stem_word(word: str) -> str:
     w = word.lower().strip()
     for suffix in ("ing", "ed", "es", "s"):
         if len(w) > len(suffix) + 3 and w.endswith(suffix):
-            return w[:-len(suffix)]
+            return w[: -len(suffix)]
     return w
 
 
@@ -201,7 +201,9 @@ def check_relevance(
     # For multi-word queries or aliases, check high-confidence stemmed token overlap
     if not match:
         candidates = [keyword] + (aliases or [])
-        match = any(_matches_multi_word_overlap(combined_text, cand, keyword) for cand in candidates)
+        match = any(
+            _matches_multi_word_overlap(combined_text, cand, keyword) for cand in candidates
+        )
 
     if not match:
         return False, "irrelevant_keyword"

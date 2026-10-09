@@ -84,4 +84,3 @@ class TestSettings:
         sqlite_url, sqlite_args = normalize_database_connection("sqlite+aiosqlite:///./test.db")
         assert sqlite_url == "sqlite+aiosqlite:///./test.db"
         assert sqlite_args == {"check_same_thread": False}
-

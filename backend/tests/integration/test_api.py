@@ -22,14 +22,29 @@ from app.services.keyword_service import get_or_create_keyword
 from app.services.mention_service import update_mention_enrichment, upsert_mention
 
 
+from app.api.deps import get_current_user
+from app.db.models import User
+
+
 @pytest_asyncio.fixture
 async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Yield test HTTP client with overridden database dependency."""
+    """Yield test HTTP client with overridden database dependency and admin authentication."""
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
+    async def override_get_current_user() -> User:
+        return User(
+            id=1,
+            email="admin@socialinsights.io",
+            hashed_password="pbkdf2:sha256:100000$test$test",
+            role="admin",
+            full_name="System Administrator",
+            is_active=True,
+        )
+
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client
@@ -259,3 +274,57 @@ class TestInternalEndpoints:
         )
         assert res.status_code == 200
         assert res.json()["status"] == "success"
+
+
+class TestRBACEnforcement:
+    @pytest.mark.asyncio
+    async def test_viewer_blocked_from_mutations(
+        self, async_client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        """Viewer role must receive 403 Forbidden on collection and brand mutations."""
+
+        async def override_viewer() -> User:
+            return User(
+                id=3,
+                email="viewer@socialinsights.io",
+                hashed_password="pbkdf2:sha256:100000$test$test",
+                role="viewer",
+                full_name="Executive Viewer",
+                is_active=True,
+            )
+
+        app.dependency_overrides[get_current_user] = override_viewer
+
+        # 1. Keywords create forbidden for viewer
+        res_kw = await async_client.post("/api/keywords", json={"term": "BlockedBrand"})
+        assert res_kw.status_code == 403
+
+        # 2. Collect trigger forbidden for viewer
+        res_collect = await async_client.post("/api/collect", json={"keyword": "BlockedBrand"})
+        assert res_collect.status_code == 403
+
+        # 3. Alert resolution forbidden for viewer
+        res_alert = await async_client.post("/api/alerts/999/resolve")
+        assert res_alert.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_analyst_permitted_for_collection(
+        self, async_client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        """Analyst role can create keywords and initiate collection."""
+
+        async def override_analyst() -> User:
+            return User(
+                id=2,
+                email="analyst@socialinsights.io",
+                hashed_password="pbkdf2:sha256:100000$test$test",
+                role="analyst",
+                full_name="Market Analyst",
+                is_active=True,
+            )
+
+        app.dependency_overrides[get_current_user] = override_analyst
+
+        with patch("app.api.collect.execute_collection_pipeline"):
+            res = await async_client.post("/api/collect", json={"keyword": "AnalystBrand"})
+            assert res.status_code == 202

@@ -353,7 +353,7 @@ def _generate_template_summary(
     summary_paragraphs = [
         f"Public discussion regarding {keyword} across {total} analyzed mentions is {dominant}. {tone_clause}",
         f"{top_topics_str} Ingestion gathered data across multiple web channels including {source_names}.",
-        f"Data quality filtering screened out {stats.quality.total_dropped} irrelevant, duplicate, or spam records, retaining {stats.quality.total_kept} qualified mentions for high-confidence intelligence.",
+        f"Data quality filtering screened out {stats.quality.total_dropped} irrelevant or duplicate records, retaining {stats.quality.total_kept} qualified mentions for high-confidence intelligence.",
     ]
 
     return " ".join(summary_paragraphs)

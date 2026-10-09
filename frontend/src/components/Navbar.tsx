@@ -248,6 +248,27 @@ export function Navbar({
               : "Connecting..."}
           </div>
 
+          {/* Instant 1-Click Evaluation Persona Switcher */}
+          <div className="hidden lg:flex items-center gap-1 bg-[#111827] border border-white/10 rounded-xl p-1 text-[11px]">
+            {(["admin", "analyst", "viewer"] as UserRole[]).map((r) => {
+              const isCurrent = role === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => demoLogin(r)}
+                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                    isCurrent
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {r === "admin" ? "Admin" : r === "analyst" ? "Analyst" : "Viewer"}
+                </button>
+              );
+            })}
+          </div>
+
           {/* User & Role Dropdown */}
           <div className="relative">
             <button

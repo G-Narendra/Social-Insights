@@ -295,10 +295,10 @@ export function CompareTab({ initialKeyword, availableKeywords = [] }: CompareTa
             return (
               <div
                 key={comp.keyword}
-                className="glass-card rounded-2xl p-5 flex flex-col justify-between border-slate-700/60 hover:border-slate-600 transition-all"
+                className="bg-[#111827] border border-white/10 rounded-2xl p-5 flex flex-col justify-between backdrop-blur-md hover:border-indigo-500/30 transition-all"
               >
                 <div>
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
                     <div>
                       <h4 className="text-base font-bold text-white tracking-tight">{comp.keyword}</h4>
                       <p className="text-[11px] text-slate-400 font-mono">Share of Voice: {sovPct}%</p>
@@ -314,17 +314,17 @@ export function CompareTab({ initialKeyword, availableKeywords = [] }: CompareTa
                       <div>
                         <div className="flex justify-between text-xs text-slate-400 mb-1.5 font-mono">
                           <span className="text-emerald-400 font-semibold">{posPct.toFixed(0)}% Pos</span>
-                          <span className="text-slate-300">{neuPct.toFixed(0)}% Neu</span>
+                          <span className="text-amber-400 font-semibold">{neuPct.toFixed(0)}% Neu</span>
                           <span className="text-rose-400 font-semibold">{negPct.toFixed(0)}% Neg</span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden flex shadow-inner">
+                        <div className="h-2 w-full rounded-full bg-[#1f2937] overflow-hidden flex shadow-inner">
                           <div
                             className="bg-emerald-500 h-full transition-all"
                             style={{ width: `${Math.max(posPct, 2)}%` }}
                             title={`Positive: ${posPct.toFixed(1)}%`}
                           />
                           <div
-                            className="bg-slate-400 h-full transition-all"
+                            className="bg-amber-500 h-full transition-all"
                             style={{ width: `${neuPct}%` }}
                             title={`Neutral: ${neuPct.toFixed(1)}%`}
                           />

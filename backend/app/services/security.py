@@ -1,7 +1,7 @@
 """
 Cryptographic security helpers for user authentication and authorization.
-Provides RFC 7519 compliant HS256 JWT creation/verification and salted PBKDF2 password hashing.
-Zero external dependencies - 100% Python standard library for maximum stability and speed.
+Provides RFC 7519 compliant HS256 JWT creation and salted PBKDF2 password hashing.
+Zero external dependencies: Python standard library implementation.
 """
 
 from __future__ import annotations

@@ -23,9 +23,12 @@ services:
       - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID:-}
       - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET:-}
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
-      - HF_HOME=/app/.cache/huggingface
-      - SENTENCE_TRANSFORMERS_HOME=/app/.cache/sbert
-      - TORCH_NUM_THREADS=2
+      - LOW_MEMORY_MODE=true
+      - TORCH_NUM_THREADS=1
+      - OMP_NUM_THREADS=1
+      - MKL_NUM_THREADS=1
+      - HF_HOME=/tmp/huggingface
+      - SENTENCE_TRANSFORMERS_HOME=/tmp/sbert
     volumes:
       - backend_data:/app/data
       - model_cache:/app/.cache

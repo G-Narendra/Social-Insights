@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
-from pathlib import Path
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -28,8 +27,14 @@ os.environ.setdefault("TRANSFORMERS_CACHE", hf_cache)
 os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", sbert_cache)
 
 
+# Limit thread parallelism to keep container CPU and memory within 512 MB constraints
+os.environ.setdefault("TORCH_NUM_THREADS", "1")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+
+
 class Settings(BaseSettings):
-    """Central configuration - every tuneable knob lives here."""
+    """Central configuration for application tuning parameters."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -62,11 +67,11 @@ class Settings(BaseSettings):
     nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_model: str = "meta/llama-3.2-11b-vision-instruct"
 
-    # --- AI/ML tuning ---
+    # --- AI and ML tuning ---
     low_memory_mode: bool = True
     llm_max_items_per_run: int = 20
     confidence_threshold: float = 0.6
-    dedup_similarity_threshold: float = 0.92
+    dedup_similarity_threshold: float = 0.85
     min_text_length: int = 30
 
     # --- Rate limiting ---

@@ -11,7 +11,7 @@ from app.services.security import (
     hash_password,
     verify_password,
 )
-from app.schemas.auth import UserSignupRequest, DemoLoginRequest
+from app.schemas.auth import UserSignupRequest
 
 
 class TestSecurityUnit:

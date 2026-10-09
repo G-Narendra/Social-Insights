@@ -100,7 +100,10 @@ async def init_db() -> None:
     async with _engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    logger.info("Database engine created for %s", clean_url.split("@")[-1] if "@" in clean_url else clean_url)
+    logger.info(
+        "Database engine created for %s",
+        clean_url.split("@")[-1] if "@" in clean_url else clean_url,
+    )
 
 
 def set_session_factory(factory: async_sessionmaker[AsyncSession] | None) -> None:

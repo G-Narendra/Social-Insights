@@ -20,17 +20,19 @@ SPAM_PATTERNS = [
     re.compile(r"\b(click\s+here\s+to\s+win|earn\s+\$\d+\s+daily)\b", re.IGNORECASE),
     re.compile(r"\b(whatsapp\s+\+\d{10,}|telegram\s+@\w+)\b", re.IGNORECASE),
     re.compile(r"\b(discount\s+code\s+use\s+\w+|use\s+promo\s+code)\b", re.IGNORECASE),
+    re.compile(
+        r"\b(affiliate\s+link|amzn\.to/\w+|join\s+telegram|cashapp\s+flip)\b", re.IGNORECASE
+    ),
 ]
 
 
 def detect_language(text: str) -> str:
-    """Detect ISO language code (e.g. 'en', 'es', 'de') safely."""
+    """Detect ISO language code safely."""
     try:
-        # Strip URLs and digits before language detection
         cleaned = re.sub(r"https?://\S+", "", text)
         cleaned = re.sub(r"\d+", "", cleaned).strip()
         if len(cleaned) < 15:
-            return "en"  # Default short phrases to en
+            return "en"
         return detect(cleaned)
     except LangDetectException:
         return "unknown"
@@ -38,7 +40,7 @@ def detect_language(text: str) -> str:
 
 def check_quality(
     text: str,
-    min_length: int = 15,
+    min_length: int = 30,
     allowed_languages: list[str] | None = None,
 ) -> tuple[bool, str | None, str]:
     """
