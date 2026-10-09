@@ -23,10 +23,34 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    TypeDecorator,
     UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+class UTCDateTime(TypeDecorator):
+    """
+    Ensures datetime objects are converted to naive UTC for storage
+    in PostgreSQL 'timestamp without time zone' (and SQLite) without asyncpg
+    type errors, and returned as timezone-aware UTC datetimes on load.
+    """
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None and isinstance(value, datetime.datetime):
+            if value.tzinfo is not None:
+                return value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+            return value
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None and isinstance(value, datetime.datetime) and value.tzinfo is None:
+            return value.replace(tzinfo=datetime.timezone.utc)
+        return value
 
 
 class Base(DeclarativeBase):
@@ -45,9 +69,9 @@ class Keyword(Base):
     aliases: Mapped[dict | None] = mapped_column(JSON, default=list)
     context_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        UTCDateTime, server_default=func.now(), nullable=False
     )
-    last_collected_at: Mapped[datetime.datetime | None] = mapped_column(DateTime, nullable=True)
+    last_collected_at: Mapped[datetime.datetime | None] = mapped_column(UTCDateTime, nullable=True)
     is_tracked: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
@@ -61,8 +85,8 @@ class CollectionRun(Base):
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, default="queued"
     )  # queued, running, partial, succeeded, failed
-    started_at: Mapped[datetime.datetime | None] = mapped_column(DateTime, nullable=True)
-    finished_at: Mapped[datetime.datetime | None] = mapped_column(DateTime, nullable=True)
+    started_at: Mapped[datetime.datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    finished_at: Mapped[datetime.datetime | None] = mapped_column(UTCDateTime, nullable=True)
     requested_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
     per_source: Mapped[dict | None] = mapped_column(JSON, default=dict)
     errors: Mapped[dict | None] = mapped_column(JSON, default=list)
@@ -93,9 +117,9 @@ class Mention(Base):
     text_clean: Mapped[str | None] = mapped_column(Text, nullable=True)
     content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     author: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    published_at: Mapped[datetime.datetime | None] = mapped_column(DateTime, nullable=True)
+    published_at: Mapped[datetime.datetime | None] = mapped_column(UTCDateTime, nullable=True)
     collected_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        UTCDateTime, server_default=func.now(), nullable=False
     )
     language: Mapped[str | None] = mapped_column(String(10), nullable=True)
     engagement: Mapped[dict | None] = mapped_column(JSON, default=dict)
@@ -132,7 +156,7 @@ class Summary(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     insights: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        UTCDateTime, server_default=func.now(), nullable=False
     )
 
 
@@ -148,9 +172,9 @@ class Alert(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        UTCDateTime, server_default=func.now(), nullable=False
     )
-    resolved_at: Mapped[datetime.datetime | None] = mapped_column(DateTime, nullable=True)
+    resolved_at: Mapped[datetime.datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
 
 class User(Base):
@@ -167,5 +191,5 @@ class User(Base):
     full_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        UTCDateTime, server_default=func.now(), nullable=False
     )
